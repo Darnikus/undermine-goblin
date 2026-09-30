@@ -7,7 +7,9 @@ authors = [
     { name = "Darnikus", email = "fake@email.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "playwright>=1.63.0",
+]
 
 [project.scripts]
 undermine-goblin = "undermine_goblin:main"
