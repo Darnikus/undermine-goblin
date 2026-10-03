@@ -2,26 +2,14 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Any
 
-from playwright.sync_api import Locator, sync_playwright
+from playwright.sync_api import sync_playwright
 
 
-def _parse_item_price(cell: Locator) -> Decimal:
-    gold_locator = cell.locator("span span.gold")
-    silver_locator = cell.locator("span span.silver")
+def _parse_item_price(price: list[str]) -> Decimal:
+    gold = price[0].replace(",", "").strip()
+    silver = price[1].replace(",", "").strip()
 
-    gold = (
-        int(gold_locator.inner_text().strip().replace(",", ""))
-        if gold_locator.count() > 0 and gold_locator.inner_text().strip()
-        else 0
-    )
-
-    silver = (
-        int(silver_locator.inner_text().strip())
-        if silver_locator.count() > 0 and silver_locator.inner_text().strip()
-        else 0
-    )
-
-    return Decimal(f"{gold}.{silver:02d}")
+    return Decimal(f"{gold}.{silver}")
 
 
 class Region(StrEnum):
@@ -39,10 +27,10 @@ class Region(StrEnum):
 
 class Scraper:
     EXTRACTORS = (
-        lambda cell: cell.inner_text().strip(),
-        lambda cell: cell.inner_text().strip(),
+        lambda data: data.strip() if isinstance(data, str) else data,
+        lambda data: data.strip() if isinstance(data, str) else data,
         _parse_item_price,
-        lambda cell: cell.inner_text().strip(),
+        lambda data: data.strip() if isinstance(data, str) else data,
     )
 
     def __init__(self, region: Region = Region.EU) -> None:
@@ -65,24 +53,49 @@ class Scraper:
             )
 
             page = browser.new_page()
+
+            # Optimization, only html
+            page.route(
+                "**/*.{png,jpg,jpeg,gif,svg,css,font,woff,woff2}",
+                lambda route: route.abort(),
+            )
+
             target_url = f"{self._base_url}/{item_id}"
 
             try:
                 page.goto(target_url)
-                page.wait_for_selector("div.list table")
+                page.wait_for_selector("div.list table tbody tr")
 
                 item_name = page.locator('a[href*="wowhead"]').inner_text()
-                servers_rows: list[Locator] = page.locator(
-                    "div.list table tr:not([data-connected-realm])"
-                ).all()  # Connected realms are filtered out as irrelevant.
+                servers_rows = page.evaluate("""
+                    () => {
+                        const rows = document.querySelectorAll(
+                            'div.list table tbody tr:not([data-connected-realm])'
+                        );
+                        return Array.from(rows).map(row => {
+                            const cells = row.querySelectorAll('td, th');
+                            return Array.from(cells).map(cell => {
+                                // Check for gold and silver spans
+                                const goldSpan = cell.querySelector('.gold');
+                                const silverSpan = cell.querySelector('.silver');
+
+                                if (goldSpan || silverSpan) {
+                                    return [
+                                        goldSpan ? goldSpan.innerText.trim() : "0",
+                                        silverSpan ? silverSpan.innerText.trim() : "0"
+                                    ];
+                                }
+                                return cell.innerText.trim();
+                            });
+                        });
+                    }
+                """)  # Connected realms are filtered out as irrelevant.
                 servers_data = []
 
-                for row in servers_rows[1:]:
-                    cells: list[Locator] = row.locator("td, th").all()
-
+                for row in servers_rows:
                     row_values = [
                         extractor(cell)
-                        for extractor, cell in zip(self.EXTRACTORS, cells, strict=False)
+                        for extractor, cell in zip(self.EXTRACTORS, row, strict=False)
                     ]
 
                     if row_values:
