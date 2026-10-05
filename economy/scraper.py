@@ -75,7 +75,7 @@ class Scraper:
         self._region = new_region
         self._update_base_url()
 
-    def scrape_item(self, item_id: str) -> dict[str, Any]:
+    def scrape_item(self, item_id: int) -> dict[str, Any]:
 
         target_url = f"{self._base_url}/{item_id}"
 
