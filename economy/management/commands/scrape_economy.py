@@ -4,7 +4,7 @@ from typing import Any
 
 from django.core.management.base import BaseCommand
 
-from economy.models import Item
+from economy.models import Item, PriceHistory
 from economy.scraper import Scraper, managed_browser
 
 
@@ -19,6 +19,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("No items found in the db."))
             return
 
+        scraped_results = []
         with managed_browser(headless=False) as page:
             scraper: Scraper = Scraper(page)  # TODO switching regions
 
@@ -28,7 +29,9 @@ class Command(BaseCommand):
 
                     data = scraper.scrape_item(item.id)
 
-                    # TODO: Save data to database (PriceHistory)
+                    scraped_results.append(
+                        {"item": item, "server": data["server"], "price": data["price"]}
+                    )
 
                     self.stdout.write(self.style.SUCCESS(f"-> Success: {data}"))
                 except Exception as e:
@@ -39,3 +42,12 @@ class Command(BaseCommand):
                 time.sleep(random.uniform(1.5, 3.0))
 
         self.stdout.write(self.style.SUCCESS("Scrape comlete!"))
+
+        for entry in scraped_results:
+            PriceHistory.objects.create(
+                item=entry["item"], server=entry["server"], price=entry["price"]
+            )
+
+            self.stdout.write(
+                self.style.SUCCESS(f"Successfully saved {entry} to database!")
+            )

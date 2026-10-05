@@ -134,7 +134,7 @@ class Scraper:
                 "item_id": item_id,
                 "name": name_locator.inner_text(),
                 "server": best_price_server[0],
-                "price": f"{price[0]}g {price[1]}s",
+                "price": best_price_server[2],
                 "count": best_price_server[3],
                 "status": "success",
             }
