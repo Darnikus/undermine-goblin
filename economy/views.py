@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 
-from .scraper import Region, Scraper
+from .scraper import Region, Scraper, managed_browser
 
 
 # Create your views here.
@@ -16,8 +16,9 @@ def test_scraper_view(request):
         )
 
     try:
-        scraper = Scraper(region=region)
-        data = scraper.scrape_item(int(item_id))
-        return JsonResponse(data)
+        with managed_browser(headless=False) as page:
+            scraper = Scraper(page, region=region)
+            data = scraper.scrape_item(int(item_id))
+            return JsonResponse(data)
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
