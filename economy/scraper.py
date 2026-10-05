@@ -60,6 +60,12 @@ class Scraper:
         self._region = region
         self._update_base_url()
 
+        # Optimization, only html
+        self.page.route(
+            "**/*.{png,jpg,jpeg,gif,svg,css,font,woff,woff2}",
+            lambda route: route.abort(),
+        )
+
     @property
     def region(self) -> Region:
         return self._region
@@ -69,20 +75,19 @@ class Scraper:
         self._region = new_region
         self._update_base_url()
 
-    def scrape_item(self, item_id: int) -> dict[str, Any]:
-        # Optimization, only html
-        self.page.route(
-            "**/*.{png,jpg,jpeg,gif,svg,css,font,woff,woff2}",
-            lambda route: route.abort(),
-        )
+    def scrape_item(self, item_id: str) -> dict[str, Any]:
 
         target_url = f"{self._base_url}/{item_id}"
 
         try:
-            self.page.goto(target_url)
-            self.page.wait_for_selector("div.list table tbody tr")
+            self.page.goto(target_url, wait_until="domcontentloaded")
 
-            item_name = self.page.locator('a[href*="wowhead"]').inner_text()
+            name_locator = self.page.locator('a[href*="wowhead"]')
+            name_locator.first.wait_for(state="visible", timeout=5000)
+
+            self.page.wait_for_timeout(300)
+
+            self.page.wait_for_selector("div.list table tbody tr", timeout=5000)
             servers_rows = self.page.evaluate("""
                 () => {
                     const rows = document.querySelectorAll(
@@ -127,7 +132,7 @@ class Scraper:
             return {
                 "region": self.region.value[1:3],
                 "item_id": item_id,
-                "name": item_name,
+                "name": name_locator.inner_text(),
                 "server": best_price_server[0],
                 "price": f"{price[0]}g {price[1]}s",
                 "count": best_price_server[3],
