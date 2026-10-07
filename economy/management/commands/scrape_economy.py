@@ -12,6 +12,11 @@ class Command(BaseCommand):
     help = "Scrapes hourly item data from Undermine.Exchange."
 
     def handle(self, *args: Any, **options: Any) -> str | None:
+        # Add random jitter 0 to 5 minutes
+        delay = random.randint(0, 300)
+        self.stdout.write(f"Waiting {delay} seconds before scraping...")
+        time.sleep(delay)
+
         self.stdout.write("Starting hourly item scrape...")
 
         items = list(Item.objects.all())
