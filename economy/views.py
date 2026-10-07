@@ -21,7 +21,7 @@ def test_scraper_view(request):
     try:
         with managed_browser(headless=False) as page:
             scraper = Scraper(page, region=region)
-            data = scraper.scrape_item(item_id)
+            data = scraper.scrape_item(int(item_id))
             return JsonResponse(data)
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
@@ -45,7 +45,7 @@ def test_multiple_scraping_view(request):
         try:
             for item_id in item_ids:
                 print(f"ID: {item_id}")
-                data = scraper.scrape_item(item_id)
+                data = scraper.scrape_item(int(item_id))
                 print(data)
                 items_data.append(data)
 

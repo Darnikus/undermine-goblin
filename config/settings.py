@@ -38,7 +38,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'economy',
+    'django_q'
 ]
+
+# Django-Q2 settings
+Q_CLUSTER = {
+    'name': 'django_q_cluster',
+    'workers': 1,
+    'timeout': 300,
+    'retry': 360,
+    'orm': 'default',  # Uses db.sqlite3 directly
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

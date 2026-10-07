@@ -75,7 +75,7 @@ class Scraper:
         self._region = new_region
         self._update_base_url()
 
-    def scrape_item(self, item_id: str) -> dict[str, Any]:
+    def scrape_item(self, item_id: int) -> dict[str, Any]:
 
         target_url = f"{self._base_url}/{item_id}"
 
@@ -134,7 +134,7 @@ class Scraper:
                 "item_id": item_id,
                 "name": name_locator.inner_text(),
                 "server": best_price_server[0],
-                "price": f"{price[0]}g {price[1]}s",
+                "price": best_price_server[2],
                 "count": best_price_server[3],
                 "status": "success",
             }
