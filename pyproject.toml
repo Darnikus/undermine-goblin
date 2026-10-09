@@ -8,9 +8,11 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
+    "discord-py>=2.7.1",
     "django>=6.1.1",
     "django-q2>=1.11.1",
     "playwright>=1.63.0",
+    "python-dotenv>=1.2.4",
 ]
 
 [project.scripts]
