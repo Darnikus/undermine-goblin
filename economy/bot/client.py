@@ -3,6 +3,7 @@
 import discord
 from discord.ext import commands
 
+from economy.bot.cogs.item import ItemCog
 from economy.bot.cogs.test import TestCog
 
 
@@ -14,6 +15,9 @@ class EconomyBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         await self.add_cog(TestCog(bot=self))
+        await self.add_cog(ItemCog(bot=self))
+
+        await self.tree.sync()
 
     async def on_ready(self):
         print(f"Logged on as {self.user}!")

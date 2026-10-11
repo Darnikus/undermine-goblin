@@ -35,7 +35,12 @@ class Command(BaseCommand):
                     data = scraper.scrape_item(item.id)
 
                     scraped_results.append(
-                        {"item": item, "server": data["server"], "price": data["price"]}
+                        {
+                            "item": item,
+                            "name": data["name"],
+                            "server": data["server"],
+                            "price": data["price"],
+                        }
                     )
 
                     self.stdout.write(self.style.SUCCESS(f"-> Success: {data}"))
@@ -49,8 +54,18 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Scrape comlete!"))
 
         for entry in scraped_results:
+            item: Item = entry["item"]
+
+            updated_fields = []
+            if item.name == "":
+                item.name = entry["name"]
+                updated_fields.append("name")
+
+            if updated_fields:
+                item.save(update_fields=updated_fields)
+
             PriceHistory.objects.create(
-                item=entry["item"], server=entry["server"], price=entry["price"]
+                item=item, server=entry["server"], price=entry["price"]
             )
 
             self.stdout.write(
