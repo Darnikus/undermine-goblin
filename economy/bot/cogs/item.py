@@ -8,11 +8,12 @@ from discord.ext import commands
 from economy.models import Item
 
 
-class ItemCog(commands.Cog):
+class ItemCog(commands.GroupCog, group_name="item"):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+        super().__init__()
 
-    @app_commands.command(name="add-item", description="Add an item by URL or ID")
+    @app_commands.command(name="add", description="Add an item by URL or ID")
     @app_commands.describe(item="Past the Undermine.exchange URL or raw Item ID")
     async def add_item(self, interaction: discord.Interaction, item: str):
         await interaction.response.defer(thinking=True)
