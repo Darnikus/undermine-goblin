@@ -48,6 +48,35 @@ class ItemCog(commands.GroupCog, group_name="item"):
                 "❌ An error occurred while saving to the database.", ephemeral=True
             )
 
+    @app_commands.command(
+        name="list",
+        description="Display all items currently being tracked"
+        + " from Undermine.exchange.",
+    )
+    async def list_items(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+
+        items = await sync_to_async(list)(Item.objects.all())
+
+        if not items:
+            await interaction.followup.send("No items are currently being tracked.")
+            return
+
+        embed = discord.Embed(
+            title="📋 Tracked Items",
+            description="Here is the current list of monitored items.",
+            color=discord.Color.blue(),
+        )
+
+        for item in items:
+            name = item.name or "*(Pending Scrape...)*"
+            embed.add_field(
+                name=f"(ID: {item.id})", value=f"**Name:** {name}", inline=False
+            )
+
+        embed.set_footer(text=f"Total items: {len(items)}")
+        await interaction.followup.send(embed=embed, ephemeral=True)
+
     @staticmethod
     def parse_item_input(item: str) -> str | None:
         item = item.strip()
