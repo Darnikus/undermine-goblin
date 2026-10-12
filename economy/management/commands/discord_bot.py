@@ -16,6 +16,7 @@ class Command(BaseCommand):
                     "DISCORD_BOT_TOKEN is missing in settings or .env file"
                 )
             )
+            return
 
         self.stdout.write(self.style.SUCCESS("Starting Discord bot..."))
 
