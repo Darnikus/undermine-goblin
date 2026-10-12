@@ -8,11 +8,12 @@ from discord.ext import commands
 from economy.models import Item
 
 
-class ItemCog(commands.Cog):
+class ItemCog(commands.GroupCog, group_name="item"):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+        super().__init__()
 
-    @app_commands.command(name="add-item", description="Add an item by URL or ID")
+    @app_commands.command(name="add", description="Add an item by URL or ID")
     @app_commands.describe(item="Past the Undermine.exchange URL or raw Item ID")
     async def add_item(self, interaction: discord.Interaction, item: str):
         await interaction.response.defer(thinking=True)
@@ -46,6 +47,37 @@ class ItemCog(commands.Cog):
             await interaction.followup.send(
                 "❌ An error occurred while saving to the database.", ephemeral=True
             )
+
+    @app_commands.command(
+        name="list",
+        description="Display all items currently being tracked"
+        + " from Undermine.exchange.",
+    )
+    async def list_items(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+
+        items = await sync_to_async(list)(Item.objects.all())
+
+        if not items:
+            await interaction.followup.send("No items are currently being tracked.")
+            return
+
+        embed = discord.Embed(
+            title="📋 Tracked Items",
+            description="Here is the current list of monitored items.",
+            color=discord.Color.blue(),
+        )
+
+        for item in items:
+            name = item.name or "*(Pending Scrape...)*"
+            embed.add_field(
+                name=f"(ID: {item.id})",
+                value=f"**Name:** [{name}](https://undermine.exchange/#eu-aegwynn/{item.id})",
+                inline=False,
+            )
+
+        embed.set_footer(text=f"Total items: {len(items)}")
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
     @staticmethod
     def parse_item_input(item: str) -> str | None:
