@@ -5,7 +5,9 @@ from asgiref.sync import sync_to_async
 from discord import app_commands
 from discord.ext import commands
 
+from config import settings
 from economy.models import Item
+from economy.scraper import Region
 
 
 class ItemCog(commands.GroupCog, group_name="item"):
@@ -56,6 +58,7 @@ class ItemCog(commands.GroupCog, group_name="item"):
     async def list_items(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True)
 
+        region = Region[getattr(settings, "REGION", "EU")]
         items = await sync_to_async(list)(Item.objects.all())
 
         if not items:
@@ -72,7 +75,7 @@ class ItemCog(commands.GroupCog, group_name="item"):
             name = item.name or "*(Pending Scrape...)*"
             embed.add_field(
                 name=f"(ID: {item.id})",
-                value=f"**Name:** [{name}](https://undermine.exchange/#eu-aegwynn/{item.id})",
+                value=f"**Name:** [{name}](https://undermine.exchange/{region.value}/{item.id})",
                 inline=False,
             )
 

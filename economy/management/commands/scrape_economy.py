@@ -2,10 +2,11 @@ import random
 import time
 from typing import Any
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from economy.models import Item, PriceHistory
-from economy.scraper import Scraper, managed_browser
+from economy.scraper import Region, Scraper, managed_browser
 
 
 class Command(BaseCommand):
@@ -19,6 +20,7 @@ class Command(BaseCommand):
 
         self.stdout.write("Starting hourly item scrape...")
 
+        region = Region[getattr(settings, "REGION", "EU")]
         items = list(Item.objects.all())
         if not items:
             self.stdout.write(self.style.WARNING("No items found in the db."))
@@ -26,7 +28,7 @@ class Command(BaseCommand):
 
         scraped_results = []
         with managed_browser(headless=False) as page:
-            scraper: Scraper = Scraper(page)  # TODO switching regions
+            scraper: Scraper = Scraper(page, region=region)
 
             for item in items:
                 try:
@@ -36,6 +38,7 @@ class Command(BaseCommand):
 
                     scraped_results.append(
                         {
+                            "region": data["region"],
                             "item": item,
                             "name": data["name"],
                             "server": data["server"],
