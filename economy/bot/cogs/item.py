@@ -71,7 +71,9 @@ class ItemCog(commands.GroupCog, group_name="item"):
         for item in items:
             name = item.name or "*(Pending Scrape...)*"
             embed.add_field(
-                name=f"(ID: {item.id})", value=f"**Name:** {name}", inline=False
+                name=f"(ID: {item.id})",
+                value=f"**Name:** [{name}](https://undermine.exchange/#eu-aegwynn/{item.id})",
+                inline=False,
             )
 
         embed.set_footer(text=f"Total items: {len(items)}")
