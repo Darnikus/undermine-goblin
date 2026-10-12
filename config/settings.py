@@ -21,6 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from the .env file
 load_dotenv(BASE_DIR / '.env')
 
+REGION = os.getenv('REGION')
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 
 
