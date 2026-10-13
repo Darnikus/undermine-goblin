@@ -59,14 +59,12 @@ class ItemCog(commands.GroupCog, group_name="item"):
     async def delete_item_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        item_ids = await sync_to_async(list)(
-            Item.objects.all().values_list("id", flat=True)
-        )
+        items = await sync_to_async(list)(Item.objects.all())
 
         return [
-            app_commands.Choice(name=str(id), value=str(id))
-            for id in item_ids
-            if current in str(id)
+            app_commands.Choice(name=item.__str__(), value=str(item.id))
+            for item in items
+            if current in str(item.id)
         ]
 
     @app_commands.command(
