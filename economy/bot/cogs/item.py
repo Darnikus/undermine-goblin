@@ -53,7 +53,25 @@ class ItemCog(commands.GroupCog, group_name="item"):
     @app_commands.command(name="delete", description="Delete the item")
     @app_commands.describe(item_id="Raw Item ID")
     async def delete_item(self, interaction: discord.Interaction, item_id: str):
-        await interaction.response.send_message(f"You deleted item with id {item_id}")
+        await interaction.response.defer(thinking=True)
+
+        try:
+            item = await sync_to_async(Item.objects.get)(id=item_id)
+            display_text = item.__str__()
+            await sync_to_async(item.delete)()
+
+            await interaction.followup.send(
+                f"✅ Successfully deleted `{display_text}`.", ephemeral=True
+            )
+
+        except Item.DoesNotExist:
+            await interaction.followup.send(
+                f"⚠️ Item with ID: `{item_id}` was not found.", ephemeral=True
+            )
+        except Exception:
+            await interaction.followup.send(
+                "❌ An error occurred while deleting the item.", ephemeral=True
+            )
 
     @delete_item.autocomplete("item_id")
     async def delete_item_autocomplete(
