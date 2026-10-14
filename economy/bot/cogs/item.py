@@ -15,6 +15,17 @@ class ItemCog(commands.GroupCog, group_name="item"):
         self.bot = bot
         super().__init__()
 
+    async def item_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        items = await sync_to_async(list)(Item.objects.all())
+
+        return [
+            app_commands.Choice(name=item.__str__(), value=str(item.id))
+            for item in items
+            if current in str(item.id)
+        ]
+
     @app_commands.command(name="add", description="Add an item by URL or ID")
     @app_commands.describe(item="Past the Undermine.exchange URL or raw Item ID")
     async def add_item(self, interaction: discord.Interaction, item: str):
@@ -52,6 +63,7 @@ class ItemCog(commands.GroupCog, group_name="item"):
 
     @app_commands.command(name="delete", description="Delete the item")
     @app_commands.describe(item_id="Raw Item ID")
+    @app_commands.autocomplete(item_id=item_autocomplete)
     async def delete_item(self, interaction: discord.Interaction, item_id: str):
         await interaction.response.defer(thinking=True)
 
@@ -72,18 +84,6 @@ class ItemCog(commands.GroupCog, group_name="item"):
             await interaction.followup.send(
                 "❌ An error occurred while deleting the item.", ephemeral=True
             )
-
-    @delete_item.autocomplete("item_id")
-    async def delete_item_autocomplete(
-        self, interaction: discord.Interaction, current: str
-    ) -> list[app_commands.Choice[str]]:
-        items = await sync_to_async(list)(Item.objects.all())
-
-        return [
-            app_commands.Choice(name=item.__str__(), value=str(item.id))
-            for item in items
-            if current in str(item.id)
-        ]
 
     @app_commands.command(
         name="list",
