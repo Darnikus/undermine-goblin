@@ -50,6 +50,41 @@ class ItemCog(commands.GroupCog, group_name="item"):
                 "❌ An error occurred while saving to the database.", ephemeral=True
             )
 
+    @app_commands.command(name="delete", description="Delete the item")
+    @app_commands.describe(item_id="Raw Item ID")
+    async def delete_item(self, interaction: discord.Interaction, item_id: str):
+        await interaction.response.defer(thinking=True)
+
+        try:
+            item = await sync_to_async(Item.objects.get)(id=item_id)
+            display_text = item.__str__()
+            await sync_to_async(item.delete)()
+
+            await interaction.followup.send(
+                f"✅ Successfully deleted `{display_text}`.", ephemeral=True
+            )
+
+        except Item.DoesNotExist:
+            await interaction.followup.send(
+                f"⚠️ Item with ID: `{item_id}` was not found.", ephemeral=True
+            )
+        except Exception:
+            await interaction.followup.send(
+                "❌ An error occurred while deleting the item.", ephemeral=True
+            )
+
+    @delete_item.autocomplete("item_id")
+    async def delete_item_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[str]]:
+        items = await sync_to_async(list)(Item.objects.all())
+
+        return [
+            app_commands.Choice(name=item.__str__(), value=str(item.id))
+            for item in items
+            if current in str(item.id)
+        ]
+
     @app_commands.command(
         name="list",
         description="Display all items currently being tracked"
