@@ -8,6 +8,7 @@ from discord.ext import commands
 from config import settings
 from economy.models import Item
 from economy.scraper import Region
+from economy.services.graphs import generate_price_graph
 
 
 class ItemCog(commands.GroupCog, group_name="item"):
@@ -116,6 +117,33 @@ class ItemCog(commands.GroupCog, group_name="item"):
 
         embed.set_footer(text=f"Total items: {len(items)}")
         await interaction.followup.send(embed=embed, ephemeral=True)
+
+    @app_commands.command(
+        name="pricegraph", description="Show a price history graph for an item."
+    )
+    @app_commands.describe(item_id="Raw Item ID")
+    @app_commands.autocomplete(item_id=item_autocomplete)
+    async def pricegraph(self, interaction: discord.Interaction, item_id: str):
+        await interaction.response.defer(thinking=True)
+        try:
+            item = await sync_to_async(Item.objects.get)(id=item_id)
+            prices = await sync_to_async(list)(item.prices.all())
+
+            buffer = await generate_price_graph(prices)
+            file = discord.File(buffer, filename="price_history.png")
+            embed = discord.Embed(
+                title="📈 Price History Graph", color=discord.Color.blurple()
+            )
+            embed.set_image(url="attachment://price_history.png")
+
+            await interaction.followup.send(embed=embed, file=file)
+
+        except Item.DoesNotExist:
+            await interaction.followup.send(
+                f"⚠️ Item with ID: `{item_id}` was not found.", ephemeral=True
+            )
+        except Exception:
+            pass
 
     @staticmethod
     def parse_item_input(item: str) -> str | None:
