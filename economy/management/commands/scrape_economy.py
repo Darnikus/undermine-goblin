@@ -2,6 +2,7 @@ import random
 import time
 from typing import Any
 
+import requests
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
@@ -20,13 +21,29 @@ class Command(BaseCommand):
 
         self.stdout.write("Starting hourly item scrape...")
 
+        DISCORD_BOT_TOKEN = settings.DISCORD_BOT_TOKEN
+        DISCORD_CHANNEL_ID = settings.DISCORD_CHANNEL_ID
+        if not DISCORD_BOT_TOKEN or not DISCORD_CHANNEL_ID:
+            self.stdout.write(
+                self.style.WARNING(
+                    "Missing Discord configuration (Bot token or Channel ID)."
+                )
+            )
+            return
+        url = f"https://discord.com/api/v10/channels/{DISCORD_CHANNEL_ID}/messages"
+
+        headers = {
+            "Authorization": f"Bot {DISCORD_BOT_TOKEN}",
+            "Content-Type": "application/json",
+        }
+
         region = Region[getattr(settings, "REGION", "EU")]
         items = list(Item.objects.all())
         if not items:
             self.stdout.write(self.style.WARNING("No items found in the db."))
             return
 
-        scraped_results = []
+        scraped_results: list[dict[str, Any]] = []
         with managed_browser(headless=False) as page:
             scraper: Scraper = Scraper(page, region=region)
 
@@ -74,3 +91,15 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.SUCCESS(f"Successfully saved {entry} to database!")
             )
+
+            payload = {"content": entry.__str__()}
+
+            response = requests.post(url, headers=headers, json=payload)
+
+            if response.status_code != 200:
+                self.stdout.write(
+                    self.style.ERROR(
+                        "-> Failed to send message:"
+                        + f"{response.status_code}, {response.text}"
+                    )
+                )
