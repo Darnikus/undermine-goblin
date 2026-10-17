@@ -1,5 +1,6 @@
 import random
 import time
+from decimal import Decimal
 from typing import Any
 
 import requests
@@ -60,6 +61,7 @@ class Command(BaseCommand):
                             "name": data["name"],
                             "server": data["server"],
                             "price": data["price"],
+                            "url": data["url"],
                         }
                     )
 
@@ -92,7 +94,19 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f"Successfully saved {entry} to database!")
             )
 
-            payload = {"content": entry.__str__()}
+            formatted_text = (
+                f"## **Price Update: [{item.name}]**\n"
+                f"**Region:** {entry['region'].upper()}\n"
+                f"🌍 **Realm:** {entry['server']}\n"
+                "\n"
+                f"- **Current:** {self._format_decimal_to_string(entry['price'])}\n"
+                "- **Previous:** WIP\n"
+                "- **First:** WIP\n"
+                "\n"
+                f"🔗 [Check on Undermine.exchange]({entry['url']})\n"
+            )
+
+            payload = {"content": formatted_text}
 
             response = requests.post(url, headers=headers, json=payload)
 
@@ -103,3 +117,10 @@ class Command(BaseCommand):
                         + f"{response.status_code}, {response.text}"
                     )
                 )
+
+    @staticmethod
+    def _format_decimal_to_string(price: Decimal) -> str:
+        gold, silver = divmod(price, 1)
+        silver = int(silver * 100)
+
+        return f"{int(gold)}g {silver:02d}s"
