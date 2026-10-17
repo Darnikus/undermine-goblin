@@ -23,6 +23,7 @@ load_dotenv(BASE_DIR / '.env')
 
 REGION = os.getenv('REGION')
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
+DISCORD_CHANNEL_ID = os.getenv('DISCORD_CHANNEL_ID')
 
 
 # Quick-start development settings - unsuitable for production
