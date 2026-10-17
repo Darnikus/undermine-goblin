@@ -55,8 +55,8 @@ INSTALLED_APPS = [
 Q_CLUSTER = {
     'name': 'django_q_cluster',
     'workers': 1,
-    'timeout': 300,
-    'retry': 360,
+    'timeout': 600,
+    'retry': 660,
     'orm': 'default',  # Uses db.sqlite3 directly
 }
 
