@@ -106,7 +106,34 @@ class Command(BaseCommand):
                 f"🔗 [Check on Undermine.exchange]({entry['url']})\n"
             )
 
-            payload = {"content": formatted_text}
+            embeded_payload = [
+                {
+                    "title": f"**Price Update: [{item.name}]**",
+                    "url": entry["url"],
+                    "description": f"🌍 **Realm:** {entry['region'].upper()}"
+                    + f"-{entry['server']}",
+                    "fields": [
+                        {
+                            "name": "**Current Price**",
+                            "value": self._format_decimal_to_string(entry["price"]),
+                            "inline": True,
+                        },
+                        {
+                            "name": "**Previous**",
+                            "value": "WIP",
+                            "inline": True,
+                        },
+                        {
+                            "name": "**First**",
+                            "value": "WIP",
+                            "inline": True,
+                        },
+                    ],
+                }
+            ]
+
+            # payload = {"content": formatted_text}
+            payload = {"embeds": embeded_payload}
 
             response = requests.post(url, headers=headers, json=payload)
 
