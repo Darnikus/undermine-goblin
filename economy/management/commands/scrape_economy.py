@@ -161,21 +161,11 @@ class Command(BaseCommand):
         if not first_price_history:
             first_price_text = "-"
         else:
-            overal_diff = (
-                (current_price_history.price - first_price_history.price)
-                / first_price_history.price
-            ) * 100
-            overal_sign = "+" if overal_diff > 0 else ""
-            if overal_diff > 0:
-                color_start, color_end = "\u001b[0;31m", "\u001b[0m"  # Red color
-            elif overal_diff < 0:
-                color_start, color_end = "\u001b[0;32m", "\u001b[0m"  # Green color
-            else:
-                color_start, color_end = "", ""
-
-            first_price_text = f"```ansi\n{
-                Command._format_decimal_to_string(first_price_history.price)
-            } ({color_start}{overal_sign}{overal_diff:.1f}%{color_end} overall)```"
+            first_price_text = Command._format_price_change(
+                current_price_history.price,
+                first_price_history.price,
+                is_first_price=True,
+            )
 
         if not previous_price_history or previous_price_history == first_price_history:
             previous_price_text = "-"
