@@ -247,6 +247,15 @@ class Command(BaseCommand):
         else:
             color_start, color_end = "", ""
 
-        return f"```ansi\n{Command._format_decimal_to_string(compare_price)} ({
-            color_start
-        }{price_sign}{price_diff:.1f}%{color_end}{is_first_price_text})```"
+        diff_text = (
+            ""
+            if price_diff == 0
+            else f"({color_start}{price_sign}{price_diff:.1f}%{color_end}{
+                is_first_price_text
+            })"
+        )
+
+        return (
+            f"```ansi\n{Command._format_decimal_to_string(compare_price)}"
+            + f" {diff_text}```"
+        )
