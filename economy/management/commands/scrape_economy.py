@@ -86,7 +86,10 @@ class Command(BaseCommand):
             if updated_fields:
                 item.save(update_fields=updated_fields)
 
-            PriceHistory.objects.create(
+            previous_price_history = item.prices.last()
+            first_price_history = item.prices.first()
+
+            current_price_history = PriceHistory.objects.create(
                 item=item, server=entry["server"], price=entry["price"]
             )
 
@@ -94,46 +97,15 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f"Successfully saved {entry} to database!")
             )
 
-            formatted_text = (
-                f"## **Price Update: [{item.name}]**\n"
-                f"**Region:** {entry['region'].upper()}\n"
-                f"🌍 **Realm:** {entry['server']}\n"
-                "\n"
-                f"- **Current:** {self._format_decimal_to_string(entry['price'])}\n"
-                "- **Previous:** WIP\n"
-                "- **First:** WIP\n"
-                "\n"
-                f"🔗 [Check on Undermine.exchange]({entry['url']})\n"
-            )
-
-            embeded_payload = [
-                {
-                    "title": f"**Price Update: [{item.name}]**",
-                    "url": entry["url"],
-                    "description": f"🌍 **Realm:** {entry['region'].upper()}"
-                    + f"-{entry['server']}",
-                    "fields": [
-                        {
-                            "name": "**Current Price**",
-                            "value": self._format_decimal_to_string(entry["price"]),
-                            "inline": True,
-                        },
-                        {
-                            "name": "**Previous**",
-                            "value": "WIP",
-                            "inline": True,
-                        },
-                        {
-                            "name": "**First**",
-                            "value": "WIP",
-                            "inline": True,
-                        },
-                    ],
-                }
-            ]
-
-            # payload = {"content": formatted_text}
-            payload = {"embeds": embeded_payload}
+            payload = {
+                "embeds": self._format_embed_payload(
+                    current_price_history,
+                    previous_price_history,
+                    first_price_history,
+                    entry["region"],
+                    entry["url"],
+                )
+            }
 
             response = requests.post(url, headers=headers, json=payload)
 
@@ -151,3 +123,68 @@ class Command(BaseCommand):
         silver = int(silver * 100)
 
         return f"{int(gold)}g {silver:02d}s"
+
+    @staticmethod
+    def _format_embed_payload(
+        current_price_history: PriceHistory,
+        previous_price_history: PriceHistory | None,
+        first_price_history: PriceHistory | None,
+        region: str,
+        item_url: str,
+    ) -> list[dict[str, Any]]:
+        """Formats a message as a Discord embed.
+
+        Args:
+            current_price_history (PriceHistory): Current PriceHistory instance.
+            previous_price_history (PriceHistory | None): Previous PriceHistory
+             instance.
+            first_price_history (PriceHistory | None): First tracked PriceHistory
+             instance.
+            region (str): Selected region.
+            item_url (str): Url of the tracked item.
+
+        Returns:
+            list[dict[str, Any]]: An embed ready to be included in the payload.
+        """
+        item: Item = current_price_history.item
+        previous_price = (
+            "-"
+            if not previous_price_history
+            or previous_price_history == first_price_history
+            else Command._format_decimal_to_string(previous_price_history.price)
+        )
+        first_price = (
+            "-"
+            if not first_price_history
+            else Command._format_decimal_to_string(first_price_history.price)
+        )
+
+        embeded_payload = [
+            {
+                "title": f"**Price Update: [{item.name}]**",
+                "url": item_url,
+                "description": f"🌍 **Realm:** {region.upper()}"
+                + f"-{current_price_history.server}",
+                "fields": [
+                    {
+                        "name": "**Current Price**",
+                        "value": Command._format_decimal_to_string(
+                            current_price_history.price
+                        ),
+                        "inline": False,
+                    },
+                    {
+                        "name": "**Previous**",
+                        "value": previous_price,
+                        "inline": False,
+                    },
+                    {
+                        "name": "**First Tracked**",
+                        "value": first_price,
+                        "inline": False,
+                    },
+                ],
+            }
+        ]
+
+        return embeded_payload
