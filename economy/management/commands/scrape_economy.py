@@ -146,6 +146,10 @@ class Command(BaseCommand):
         Returns:
             list[dict[str, Any]]: An embed ready to be included in the payload.
         """
+        NEUTRAL_COLOR = 9807270  # Gray
+        GREEN_COLOR = 5763719  # Green color for price went down
+        RED_COLOR = 15548997  # Red color for price went up
+
         item: Item = current_price_history.item
         previous_price_text = (
             "-"
@@ -164,17 +168,21 @@ class Command(BaseCommand):
             or current_price_history.price == previous_price_history.price
         ):
             title_prefix = "Price Update"
+            embed_color = NEUTRAL_COLOR
         else:
+            has_price_increased = (
+                current_price_history.price > previous_price_history.price
+            )  # True: Price went up; False: Price went down
             title_prefix = (
-                "📉 Price Drop"
-                if current_price_history.price < previous_price_history.price
-                else "📈 Price Increase"
+                "📉 Price Drop" if not has_price_increased else "📈 Price Increase"
             )
+            embed_color = RED_COLOR if has_price_increased else GREEN_COLOR
 
         embeded_payload = [
             {
                 "title": f"**{title_prefix}: [{item.name}]**",
                 "url": item_url,
+                "color": embed_color,
                 "description": f"🌍 **Realm:** {region.upper()}"
                 + f"-{current_price_history.server}",
                 "fields": [
