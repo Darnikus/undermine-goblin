@@ -151,12 +151,6 @@ class Command(BaseCommand):
         RED_COLOR = 15548997  # Red color for price went up
 
         item: Item = current_price_history.item
-        previous_price_text = (
-            "-"
-            if not previous_price_history
-            or previous_price_history == first_price_history
-            else Command._format_decimal_to_string(previous_price_history.price)
-        )
 
         if not first_price_history:
             first_price_text = "-"
@@ -180,6 +174,7 @@ class Command(BaseCommand):
         ):
             title_prefix = "Price Update"
             embed_color = NEUTRAL_COLOR
+            current_icon = "⚪"
         else:
             has_price_increased = (
                 current_price_history.price > previous_price_history.price
@@ -188,6 +183,7 @@ class Command(BaseCommand):
                 "📉 Price Drop" if not has_price_increased else "📈 Price Increase"
             )
             embed_color = RED_COLOR if has_price_increased else GREEN_COLOR
+            current_icon = "🟢" if not has_price_increased else "🔴"
 
         embeded_payload = [
             {
@@ -199,9 +195,11 @@ class Command(BaseCommand):
                 "fields": [
                     {
                         "name": "**Current Price**",
-                        "value": Command._format_decimal_to_string(
-                            current_price_history.price
-                        ),
+                        "value": f"```ansi\n{
+                            Command._format_decimal_to_string(
+                                current_price_history.price
+                            )
+                        } {current_icon}```",
                         "inline": False,
                     },
                     {
