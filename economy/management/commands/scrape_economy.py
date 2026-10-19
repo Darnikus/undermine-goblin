@@ -177,6 +177,13 @@ class Command(BaseCommand):
                 Command._format_decimal_to_string(first_price_history.price)
             } ({color_start}{overal_sign}{overal_diff:.1f}%{color_end} overall)```"
 
+        if not previous_price_history or previous_price_history == first_price_history:
+            previous_price_text = "-"
+        else:
+            previous_price_text = Command._format_price_change(
+                current_price_history.price, previous_price_history.price
+            )
+
         if (
             not previous_price_history
             or current_price_history.price == previous_price_history.price
@@ -222,3 +229,34 @@ class Command(BaseCommand):
         ]
 
         return embeded_payload
+
+    @staticmethod
+    def _format_price_change(
+        current_price: Decimal, compare_price: Decimal, is_first_price: bool = False
+    ) -> str:
+        """Prepares price text for a Discord embed.
+
+        Args:
+            current_price (Decimal): Current price.
+            compare_price (Decimal): Either previous or first prices.
+            is_first_price (bool, optional): True if it the first prices: False if it's
+             not. Defaults to False.
+
+        Returns:
+            str: Formated price text.
+        """
+        price_diff = ((current_price - compare_price) / compare_price) * 100
+        price_sign = "+" if price_diff > 0 else ""
+
+        is_first_price_text = " overall" if is_first_price else ""
+
+        if price_diff > 0:
+            color_start, color_end = "\u001b[0;31m", "\u001b[0m"  # Red color
+        elif price_diff < 0:
+            color_start, color_end = "\u001b[0;32m", "\u001b[0m"  # Green color
+        else:
+            color_start, color_end = "", ""
+
+        return f"```ansi\n{Command._format_decimal_to_string(compare_price)} ({
+            color_start
+        }{price_sign}{price_diff:.1f}%{color_end}{is_first_price_text})```"
