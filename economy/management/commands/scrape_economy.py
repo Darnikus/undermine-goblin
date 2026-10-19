@@ -147,21 +147,33 @@ class Command(BaseCommand):
             list[dict[str, Any]]: An embed ready to be included in the payload.
         """
         item: Item = current_price_history.item
-        previous_price = (
+        previous_price_text = (
             "-"
             if not previous_price_history
             or previous_price_history == first_price_history
             else Command._format_decimal_to_string(previous_price_history.price)
         )
-        first_price = (
+        first_price_text = (
             "-"
             if not first_price_history
             else Command._format_decimal_to_string(first_price_history.price)
         )
 
+        if (
+            not previous_price_history
+            or current_price_history.price == previous_price_history.price
+        ):
+            title_prefix = "Price Update"
+        else:
+            title_prefix = (
+                "📉 Price Drop"
+                if current_price_history.price < previous_price_history.price
+                else "📈 Price Increase"
+            )
+
         embeded_payload = [
             {
-                "title": f"**Price Update: [{item.name}]**",
+                "title": f"**{title_prefix}: [{item.name}]**",
                 "url": item_url,
                 "description": f"🌍 **Realm:** {region.upper()}"
                 + f"-{current_price_history.server}",
@@ -175,12 +187,12 @@ class Command(BaseCommand):
                     },
                     {
                         "name": "**Previous**",
-                        "value": previous_price,
+                        "value": previous_price_text,
                         "inline": False,
                     },
                     {
                         "name": "**First Tracked**",
-                        "value": first_price,
+                        "value": first_price_text,
                         "inline": False,
                     },
                 ],
