@@ -136,6 +136,7 @@ class Scraper:
                 "server": best_price_server[0],
                 "price": best_price_server[2],
                 "count": best_price_server[3],
+                "url": target_url,
                 "status": "success",
             }
 
