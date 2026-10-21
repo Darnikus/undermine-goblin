@@ -92,7 +92,9 @@ class Scraper:
                     item_id, target_url, name_locator
                 )
             else:
-                print("Table was not found.")
+                scraped_data = self._scrape_region_wide_item(
+                    item_id, target_url, name_locator
+                )
 
             return scraped_data
 
@@ -151,6 +153,32 @@ class Scraper:
             "server": best_price_server[0],
             "price": best_price_server[2],
             "count": best_price_server[3],
+            "url": target_url,
+            "status": "success",
+        }
+
+    def _scrape_region_wide_item(
+        self, item_id: int, target_url: str, name_locator: Locator
+    ) -> dict[str, Any]:
+        details_table = self.page.locator("table.hidden-region-details")
+
+        count_locator = details_table.locator(
+            "xpath=.//td[contains(., 'Available')]/following-sibling::td[1]"
+        )
+        price_locator = details_table.locator(
+            "xpath=.//td[contains(., 'Current')]/following-sibling::td[1]"
+        )
+
+        not_parsed_price = price_locator.locator("span > span").all_inner_texts()
+        price = _parse_item_price(not_parsed_price)
+
+        return {
+            "region": self.region.value[1:3],
+            "item_id": item_id,
+            "name": name_locator.inner_text(),
+            "server": "Region-Wide",
+            "price": price,
+            "count": count_locator.inner_text(),
             "url": target_url,
             "status": "success",
         }
