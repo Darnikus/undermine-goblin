@@ -87,7 +87,14 @@ class Scraper:
 
             self.page.wait_for_timeout(300)
 
-            return self._scrape_realm_specific_item(item_id, target_url, name_locator)
+            if self.page.locator("div.list").count() > 0:
+                scraped_data = self._scrape_realm_specific_item(
+                    item_id, target_url, name_locator
+                )
+            else:
+                print("Table was not found.")
+
+            return scraped_data
 
         except Exception as e:
             raise RuntimeError(f"Failed to scrap item {item_id}") from e
