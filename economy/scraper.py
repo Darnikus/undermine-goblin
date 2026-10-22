@@ -1,7 +1,9 @@
+import re
 from contextlib import contextmanager
 from decimal import Decimal
 from enum import StrEnum
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 from playwright.sync_api import Page, sync_playwright
 
@@ -84,6 +86,10 @@ class Scraper:
 
             name_locator = self.page.locator('a[href*="wowhead"]')
             name_locator.first.wait_for(state="visible", timeout=5000)
+            icon_locator = self.page.locator("span.title span.icon")
+            icon_css_url = icon_locator.evaluate(
+                "element => getComputedStyle(element)['background-image']"
+            )
 
             self.page.wait_for_timeout(300)
 
@@ -98,6 +104,7 @@ class Scraper:
                     "item_id": item_id,
                     "name": name_locator.inner_text(),
                     "url": target_url,
+                    "icon_url": self._update_icon_url(icon_css_url),
                     "status": "success",
                 }
             )
@@ -176,3 +183,34 @@ class Scraper:
 
     def _update_base_url(self) -> None:
         self._base_url = f"https://undermine.exchange/{self.region.value}"
+
+    @staticmethod
+    def _update_icon_url(
+        css_value: str, target_size: str = "large", new_size: str = "medium"
+    ) -> str:
+        """Extracts the icon's URL from the CSS `background-image` value, then resizes
+        it.
+
+        Args:
+            css_value (str): CSS `background-image` value.
+            target_size (str, optional): Current icon's size. Defaults to "large".
+            new_size (str, optional): Desired icon's size. Defaults to "medium".
+
+        Raises:
+            ValueError: Failed to excract the url.
+
+        Returns:
+            str: An icon's URL.
+        """
+        match = re.search(r'url\((?:[\'"]?)(.*?)(?:[\'"]?)\)', css_value)
+
+        if match is None:
+            raise ValueError(f"No background image URL in CSS: '{css_value}'")
+
+        raw_url = match.group(1)
+        parsed = urlparse(raw_url)
+        parts = list(parsed)
+        parts[2] = parts[2].replace(f"/{target_size}/", f"/{new_size}/")
+        new_url = urlunparse(parts)
+
+        return new_url
