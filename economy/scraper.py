@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Any
 
-from playwright.sync_api import Locator, Page, sync_playwright
+from playwright.sync_api import Page, sync_playwright
 
 
 def _parse_item_price(price: list[str]) -> Decimal:
@@ -88,22 +88,25 @@ class Scraper:
             self.page.wait_for_timeout(300)
 
             if self.page.locator("div.list").count() > 0:
-                scraped_data = self._scrape_realm_specific_item(
-                    item_id, target_url, name_locator
-                )
+                scraped_data = self._scrape_realm_specific_item()
             else:
-                scraped_data = self._scrape_region_wide_item(
-                    item_id, target_url, name_locator
-                )
+                scraped_data = self._scrape_region_wide_item()
 
+            scraped_data.update(
+                {
+                    "region": self.region.value[1:3],
+                    "item_id": item_id,
+                    "name": name_locator.inner_text(),
+                    "url": target_url,
+                    "status": "success",
+                }
+            )
             return scraped_data
 
         except Exception as e:
             raise RuntimeError(f"Failed to scrap item {item_id}") from e
 
-    def _scrape_realm_specific_item(
-        self, item_id: int, target_url: str, name_locator: Locator
-    ) -> dict[str, Any]:
+    def _scrape_realm_specific_item(self) -> dict[str, Any]:
         self.page.wait_for_selector("div.list table tbody tr", timeout=5000)
         servers_rows = self.page.evaluate("""
             () => {
@@ -147,19 +150,12 @@ class Scraper:
         # price = int(best_price_server[2]), int(best_price_server[2] % 1 * 100)
 
         return {
-            "region": self.region.value[1:3],
-            "item_id": item_id,
-            "name": name_locator.inner_text(),
             "server": best_price_server[0],
             "price": best_price_server[2],
             "count": best_price_server[3],
-            "url": target_url,
-            "status": "success",
         }
 
-    def _scrape_region_wide_item(
-        self, item_id: int, target_url: str, name_locator: Locator
-    ) -> dict[str, Any]:
+    def _scrape_region_wide_item(self) -> dict[str, Any]:
         details_table = self.page.locator("table.hidden-region-details")
 
         count_locator = details_table.locator(
@@ -173,14 +169,9 @@ class Scraper:
         price = _parse_item_price(not_parsed_price)
 
         return {
-            "region": self.region.value[1:3],
-            "item_id": item_id,
-            "name": name_locator.inner_text(),
             "server": "Region-Wide",
             "price": price,
             "count": count_locator.inner_text(),
-            "url": target_url,
-            "status": "success",
         }
 
     def _update_base_url(self) -> None:
