@@ -5,7 +5,9 @@ from django.db import models
 
 # Create your models here.
 class Item(models.Model):
-    id = models.IntegerField(primary_key=True, help_text="WoW in-game item ID")
+    id = models.CharField(
+        primary_key=True, max_length=50, help_text="WoW in-game item ID"
+    )
     name = models.CharField(max_length=255)
 
     if TYPE_CHECKING:

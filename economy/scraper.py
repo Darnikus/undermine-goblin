@@ -77,7 +77,7 @@ class Scraper:
         self._region = new_region
         self._update_base_url()
 
-    def scrape_item(self, item_id: int) -> dict[str, Any]:
+    def scrape_item(self, item_id: str) -> dict[str, Any]:
 
         target_url = f"{self._base_url}/{item_id}"
 
@@ -87,9 +87,6 @@ class Scraper:
             name_locator = self.page.locator('a[href*="wowhead"]')
             name_locator.first.wait_for(state="visible", timeout=5000)
             icon_locator = self.page.locator("span.title span.icon")
-            icon_css_url = icon_locator.evaluate(
-                "element => getComputedStyle(element)['background-image']"
-            )
 
             self.page.wait_for_timeout(300)
 
@@ -97,6 +94,10 @@ class Scraper:
                 scraped_data = self._scrape_realm_specific_item()
             else:
                 scraped_data = self._scrape_region_wide_item()
+
+            icon_css_url = icon_locator.evaluate(
+                "element => getComputedStyle(element)['background-image']"
+            )
 
             scraped_data.update(
                 {
