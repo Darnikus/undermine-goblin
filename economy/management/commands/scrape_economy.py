@@ -62,6 +62,7 @@ class Command(BaseCommand):
                             "server": data["server"],
                             "price": data["price"],
                             "url": data["url"],
+                            "icon_url": data["icon_url"],
                         }
                     )
 
@@ -104,6 +105,7 @@ class Command(BaseCommand):
                     first_price_history,
                     entry["region"],
                     entry["url"],
+                    entry["icon_url"],
                 )
             }
 
@@ -131,6 +133,7 @@ class Command(BaseCommand):
         first_price_history: PriceHistory | None,
         region: str,
         item_url: str,
+        icon_url: str,
     ) -> list[dict[str, Any]]:
         """Formats a message as a Discord embed.
 
@@ -142,6 +145,7 @@ class Command(BaseCommand):
              instance.
             region (str): Selected region.
             item_url (str): Url of the tracked item.
+            icon_url (str): Url of item's icon.
 
         Returns:
             list[dict[str, Any]]: An embed ready to be included in the payload.
@@ -192,6 +196,7 @@ class Command(BaseCommand):
                 "color": embed_color,
                 "description": f"🌍 **Realm:** {region.upper()}"
                 + f"-{current_price_history.server}",
+                "thumbnail": {"url": icon_url},
                 "fields": [
                     {
                         "name": "**Current Price**",
