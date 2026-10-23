@@ -1,9 +1,11 @@
+import re
 from contextlib import contextmanager
 from decimal import Decimal
 from enum import StrEnum
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
-from playwright.sync_api import Locator, Page, sync_playwright
+from playwright.sync_api import Page, sync_playwright
 
 
 def _parse_item_price(price: list[str]) -> Decimal:
@@ -84,26 +86,34 @@ class Scraper:
 
             name_locator = self.page.locator('a[href*="wowhead"]')
             name_locator.first.wait_for(state="visible", timeout=5000)
+            icon_locator = self.page.locator("span.title span.icon")
+            icon_css_url = icon_locator.evaluate(
+                "element => getComputedStyle(element)['background-image']"
+            )
 
             self.page.wait_for_timeout(300)
 
             if self.page.locator("div.list").count() > 0:
-                scraped_data = self._scrape_realm_specific_item(
-                    item_id, target_url, name_locator
-                )
+                scraped_data = self._scrape_realm_specific_item()
             else:
-                scraped_data = self._scrape_region_wide_item(
-                    item_id, target_url, name_locator
-                )
+                scraped_data = self._scrape_region_wide_item()
 
+            scraped_data.update(
+                {
+                    "region": self.region.value[1:3],
+                    "item_id": item_id,
+                    "name": name_locator.inner_text(),
+                    "url": target_url,
+                    "icon_url": self._update_icon_url(icon_css_url),
+                    "status": "success",
+                }
+            )
             return scraped_data
 
         except Exception as e:
             raise RuntimeError(f"Failed to scrap item {item_id}") from e
 
-    def _scrape_realm_specific_item(
-        self, item_id: int, target_url: str, name_locator: Locator
-    ) -> dict[str, Any]:
+    def _scrape_realm_specific_item(self) -> dict[str, Any]:
         self.page.wait_for_selector("div.list table tbody tr", timeout=5000)
         servers_rows = self.page.evaluate("""
             () => {
@@ -147,19 +157,12 @@ class Scraper:
         # price = int(best_price_server[2]), int(best_price_server[2] % 1 * 100)
 
         return {
-            "region": self.region.value[1:3],
-            "item_id": item_id,
-            "name": name_locator.inner_text(),
             "server": best_price_server[0],
             "price": best_price_server[2],
             "count": best_price_server[3],
-            "url": target_url,
-            "status": "success",
         }
 
-    def _scrape_region_wide_item(
-        self, item_id: int, target_url: str, name_locator: Locator
-    ) -> dict[str, Any]:
+    def _scrape_region_wide_item(self) -> dict[str, Any]:
         details_table = self.page.locator("table.hidden-region-details")
 
         count_locator = details_table.locator(
@@ -173,15 +176,41 @@ class Scraper:
         price = _parse_item_price(not_parsed_price)
 
         return {
-            "region": self.region.value[1:3],
-            "item_id": item_id,
-            "name": name_locator.inner_text(),
             "server": "Region-Wide",
             "price": price,
             "count": count_locator.inner_text(),
-            "url": target_url,
-            "status": "success",
         }
 
     def _update_base_url(self) -> None:
         self._base_url = f"https://undermine.exchange/{self.region.value}"
+
+    @staticmethod
+    def _update_icon_url(
+        css_value: str, target_size: str = "large", new_size: str = "medium"
+    ) -> str:
+        """Extracts the icon's URL from the CSS `background-image` value, then resizes
+        it.
+
+        Args:
+            css_value (str): CSS `background-image` value.
+            target_size (str, optional): Current icon's size. Defaults to "large".
+            new_size (str, optional): Desired icon's size. Defaults to "medium".
+
+        Raises:
+            ValueError: Failed to excract the url.
+
+        Returns:
+            str: An icon's URL.
+        """
+        match = re.search(r'url\((?:[\'"]?)(.*?)(?:[\'"]?)\)', css_value)
+
+        if match is None:
+            raise ValueError(f"No background image URL in CSS: '{css_value}'")
+
+        raw_url = match.group(1)
+        parsed = urlparse(raw_url)
+        parts = list(parsed)
+        parts[2] = parts[2].replace(f"/{target_size}/", f"/{new_size}/")
+        new_url = urlunparse(parts)
+
+        return new_url
