@@ -1,3 +1,5 @@
+import logging
+import os
 import re
 from contextlib import contextmanager
 from decimal import Decimal
@@ -6,6 +8,14 @@ from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 from playwright.sync_api import Page, sync_playwright
+
+os.makedirs("logs", exist_ok=True)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("logs/scraper.log"), logging.StreamHandler()],
+)
 
 
 def _parse_item_price(price: list[str]) -> Decimal:
@@ -120,6 +130,7 @@ class Scraper:
             return scraped_data
 
         except Exception as e:
+            logging.error(f"Failed to scrap item (ID: `{item_id}`): {e}", exc_info=True)
             raise RuntimeError(f"Failed to scrap item {item_id}") from e
 
     def _scrape_realm_specific_item(self) -> dict[str, Any]:
