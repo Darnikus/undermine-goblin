@@ -106,7 +106,7 @@ class Scraper:
             name_locator.first.wait_for(state="visible", timeout=5000)
             icon_locator = self.page.locator("span.title span.icon")
 
-            self.page.wait_for_timeout(300)
+            self.page.wait_for_timeout(400)
 
             if self.page.locator("div.list").count() > 0:
                 scraped_data = self._scrape_realm_specific_item()
