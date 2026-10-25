@@ -188,11 +188,13 @@ class Scraper:
         count_locator = details_table.locator(
             "xpath=.//td[contains(., 'Available')]/following-sibling::td[1]"
         )
-        price_locator = details_table.locator(
+        price_container_locator = details_table.locator(
             "xpath=.//td[contains(., 'Current')]/following-sibling::td[1]"
         )
+        price_locator = price_container_locator.locator("span > span")
+        price_locator.first.wait_for(state="visible", timeout=5000)
 
-        not_parsed_price = price_locator.locator("span > span").all_inner_texts()
+        not_parsed_price = price_locator.all_text_contents()
         price = _parse_item_price(not_parsed_price)
 
         return {
