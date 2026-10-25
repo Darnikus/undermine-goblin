@@ -38,9 +38,17 @@ def managed_browser(headless=True):
     """
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
-            headless=headless, executable_path="/usr/bin/chromium-browser"
+            headless=headless,
+            executable_path="/usr/bin/chromium-browser",
+            args=[
+                "--disable-blink-features=AutomationControled",
+                "--start-maximized",
+            ],
         )
-        context = browser.new_context()
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+            viewport={"width": 1920, "height": 1080},
+        )
         page = context.new_page()
         try:
             yield page
