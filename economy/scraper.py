@@ -1,3 +1,5 @@
+import logging
+import os
 import re
 from contextlib import contextmanager
 from decimal import Decimal
@@ -6,6 +8,14 @@ from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 from playwright.sync_api import Page, sync_playwright
+
+os.makedirs("logs", exist_ok=True)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("logs/scraper.log"), logging.StreamHandler()],
+)
 
 
 def _parse_item_price(price: list[str]) -> Decimal:
@@ -38,9 +48,18 @@ def managed_browser(headless=True):
     """
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
-            headless=headless, executable_path="/usr/bin/chromium-browser"
+            headless=headless,
+            executable_path="/usr/bin/chromium-browser",
+            args=[
+                "--disable-blink-features=AutomationControled",
+                "--start-maximized",
+            ],
         )
-        context = browser.new_context()
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
+            viewport={"width": 1920, "height": 1080},
+        )
         page = context.new_page()
         try:
             yield page
@@ -88,7 +107,7 @@ class Scraper:
             name_locator.first.wait_for(state="visible", timeout=5000)
             icon_locator = self.page.locator("span.title span.icon")
 
-            self.page.wait_for_timeout(300)
+            self.page.wait_for_timeout(400)
 
             if self.page.locator("div.list").count() > 0:
                 scraped_data = self._scrape_realm_specific_item()
@@ -112,6 +131,7 @@ class Scraper:
             return scraped_data
 
         except Exception as e:
+            logging.error(f"Failed to scrap item (ID: `{item_id}`): {e}", exc_info=True)
             raise RuntimeError(f"Failed to scrap item {item_id}") from e
 
     def _scrape_realm_specific_item(self) -> dict[str, Any]:
@@ -169,11 +189,13 @@ class Scraper:
         count_locator = details_table.locator(
             "xpath=.//td[contains(., 'Available')]/following-sibling::td[1]"
         )
-        price_locator = details_table.locator(
+        price_container_locator = details_table.locator(
             "xpath=.//td[contains(., 'Current')]/following-sibling::td[1]"
         )
+        price_locator = price_container_locator.locator("span > span")
+        price_locator.first.wait_for(state="visible", timeout=5000)
 
-        not_parsed_price = price_locator.locator("span > span").all_inner_texts()
+        not_parsed_price = price_locator.all_text_contents()
         price = _parse_item_price(not_parsed_price)
 
         return {

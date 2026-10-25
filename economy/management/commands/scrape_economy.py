@@ -45,7 +45,7 @@ class Command(BaseCommand):
             return
 
         scraped_results: list[dict[str, Any]] = []
-        with managed_browser(headless=False) as page:
+        with managed_browser(headless=True) as page:
             scraper: Scraper = Scraper(page, region=region)
 
             for item in items:
