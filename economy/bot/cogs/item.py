@@ -191,7 +191,7 @@ class ItemCog(commands.GroupCog, group_name="item"):
         if not item:
             return None
 
-        if item.isdigit():
+        if ItemCog._is_valid_id_format(item):
             return item
 
         parsed = urlparse(item)
@@ -199,7 +199,20 @@ class ItemCog(commands.GroupCog, group_name="item"):
             path_segments = [seg for seg in parsed.fragment.split("/") if seg]
             if path_segments:
                 potential_id = path_segments[-1]
-                if potential_id.isdigit():
+                if ItemCog._is_valid_id_format(potential_id):
                     return potential_id
 
         return None
+
+    @staticmethod
+    def _is_valid_id_format(value: str) -> bool:
+        """Checks whether a string matches the ID format: 12345 or 12345-12.
+
+        Args:
+            value (str): Value to verify.
+
+        Returns:
+            bool: True if a value matches the format; False otherwise.
+        """
+        parts = value.split("-")
+        return len(parts) in (1, 2) and all(part.isdigit() for part in parts)
