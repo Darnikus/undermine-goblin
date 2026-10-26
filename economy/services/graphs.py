@@ -11,6 +11,14 @@ from economy.models import PriceHistory
 
 
 async def generate_price_graph(price_records: list[PriceHistory]) -> io.BytesIO:
+    """Generates a price graph for the Discord bot.
+
+    Args:
+        price_records (list[PriceHistory]): A list of PriceHistory instances.
+
+    Returns:
+        io.BytesIO: A buffered graph.
+    """
     timestamps = np.array([record.timestamp for record in price_records])
     prices = [float(record.price) for record in price_records]
 
