@@ -19,6 +19,14 @@ logging.basicConfig(
 
 
 def _parse_item_price(price: list[str]) -> Decimal:
+    """Convert the price list to a decimal.
+
+    Args:
+        price (list[str]): A list of gold and silver.
+
+    Returns:
+        Decimal: An item's price
+    """
     gold = price[0].replace(",", "").strip()
     silver = price[1].replace(",", "").strip()
 
@@ -44,7 +52,7 @@ def managed_browser(headless=True):
 
     Args:
         headless (bool, optional): True to open the browser in headless mode.
-        Defaults to True.
+         Defaults to True.
     """
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
@@ -69,6 +77,13 @@ def managed_browser(headless=True):
 
 
 class Scraper:
+    """Responsible for scraping data from Undermine.exchange.
+
+    Attributes:
+        page (Page): The Undermine.exchange page.
+        _region (Region): WoW region. Defaults to `Region.EU`
+    """
+
     EXTRACTORS = (
         lambda data: data.strip() if isinstance(data, str) else data,
         lambda data: data.strip() if isinstance(data, str) else data,
@@ -97,7 +112,17 @@ class Scraper:
         self._update_base_url()
 
     def scrape_item(self, item_id: str) -> dict[str, Any]:
+        """Retrieves an item's data from Undermine.exchange.
 
+        Args:
+            item_id (str): An item's ID.
+
+        Raises:
+            RuntimeError: If scraping the item data fails.
+
+        Returns:
+            dict[str, Any]: A dictionary containing the item's data.
+        """
         target_url = f"{self._base_url}/{item_id}"
 
         try:
@@ -135,6 +160,11 @@ class Scraper:
             raise RuntimeError(f"Failed to scrap item {item_id}") from e
 
     def _scrape_realm_specific_item(self) -> dict[str, Any]:
+        """Scrapes Realm-Specific item.
+
+        Returns:
+            dict[str, Any]: A dictionary containing the server, price and count.
+        """
         self.page.wait_for_selector("div.list table tbody tr", timeout=5000)
         servers_rows = self.page.evaluate("""
             () => {
@@ -184,6 +214,11 @@ class Scraper:
         }
 
     def _scrape_region_wide_item(self) -> dict[str, Any]:
+        """Scrapes Region-Wide item.
+
+        Returns:
+            dict[str, Any]: A dictionary containing the price and count.
+        """
         details_table = self.page.locator("table.hidden-region-details")
 
         count_locator = details_table.locator(
