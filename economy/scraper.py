@@ -4,10 +4,13 @@ import re
 from contextlib import contextmanager
 from decimal import Decimal
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 from playwright.sync_api import Page, sync_playwright
+
+from config.settings import CHROMIUM_EXECUTABLE_PATH
 
 os.makedirs("logs", exist_ok=True)
 
@@ -53,11 +56,24 @@ def managed_browser(headless=True):
     Args:
         headless (bool, optional): True to open the browser in headless mode.
          Defaults to True.
+
+    Raises:
+            ValueError: If `CHROMIUM_EXECUTABLE_PATH` is missing from the .env file.
+            FileNotFoundError: If the Chromium executable is not found at
+             `CHROMIUM_EXECUTABLE_PATH`.
     """
+    if not CHROMIUM_EXECUTABLE_PATH:
+        raise ValueError("Your .env file is missing CHROMIUM_EXECUTABLE_PATH.")
+
+    if not Path(CHROMIUM_EXECUTABLE_PATH).is_file():
+        raise FileNotFoundError(
+            f"Chromium executable not found at path: {CHROMIUM_EXECUTABLE_PATH}"
+        )
+
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
             headless=headless,
-            executable_path="/usr/bin/chromium-browser",
+            executable_path=CHROMIUM_EXECUTABLE_PATH,
             args=[
                 "--disable-blink-features=AutomationControled",
                 "--start-maximized",
