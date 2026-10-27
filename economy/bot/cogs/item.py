@@ -19,6 +19,15 @@ class ItemCog(commands.GroupCog, group_name="item"):
     async def item_autocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
+        """Helper method for item autocomplete.
+
+        Args:
+            interaction (discord.Interaction): An interaction from a user.
+            current (str): Current item choice.
+
+        Returns:
+            list[app_commands.Choice[str]]: Item choices.
+        """
         items = await sync_to_async(list)(Item.objects.all())
 
         return [
@@ -30,9 +39,15 @@ class ItemCog(commands.GroupCog, group_name="item"):
     @app_commands.command(name="add", description="Add an item by URL or ID")
     @app_commands.describe(item="Past the Undermine.exchange URL or raw Item ID")
     async def add_item(self, interaction: discord.Interaction, item: str):
+        """Discord command to delete an item.
+
+        Args:
+            interaction (discord.Interaction): An interaction from a user.
+            item (str): An item's ID or a full item's URL.
+        """
         await interaction.response.defer(thinking=True)
 
-        item_id = self.parse_item_input(item)
+        item_id = self._parse_item_input(item)
         if not item_id:
             await interaction.followup.send(
                 "❌ Invalid format! Please provide a valid URL or an Item ID.",
@@ -66,6 +81,12 @@ class ItemCog(commands.GroupCog, group_name="item"):
     @app_commands.describe(item_id="Raw Item ID")
     @app_commands.autocomplete(item_id=item_autocomplete)
     async def delete_item(self, interaction: discord.Interaction, item_id: str):
+        """Discord command to delete an item.
+
+        Args:
+            interaction (discord.Interaction): An interaction from a user.
+            item_id (str): An item's ID.
+        """
         await interaction.response.defer(thinking=True)
 
         try:
@@ -92,6 +113,11 @@ class ItemCog(commands.GroupCog, group_name="item"):
         + " from Undermine.exchange.",
     )
     async def list_items(self, interaction: discord.Interaction):
+        """Discord command to list all items.
+
+        Args:
+            interaction (discord.Interaction): An interaction from a user.
+        """
         await interaction.response.defer(thinking=True)
 
         region = Region[getattr(settings, "REGION", "EU")]
@@ -124,6 +150,12 @@ class ItemCog(commands.GroupCog, group_name="item"):
     @app_commands.describe(item_id="Raw Item ID")
     @app_commands.autocomplete(item_id=item_autocomplete)
     async def pricegraph(self, interaction: discord.Interaction, item_id: str):
+        """Discord command to build an item's price graph.
+
+        Args:
+            interaction (discord.Interaction): An interaction from a user.
+            item_id (str): An item's ID.
+        """
         await interaction.response.defer(thinking=True)
         try:
             item = await sync_to_async(Item.objects.get)(id=item_id)
@@ -146,12 +178,20 @@ class ItemCog(commands.GroupCog, group_name="item"):
             pass
 
     @staticmethod
-    def parse_item_input(item: str) -> str | None:
+    def _parse_item_input(item: str) -> str | None:
+        """Parses the user's item input.
+
+        Args:
+            item (str): Probably an item's ID or URL.
+
+        Returns:
+            str | None: An item's ID, or None if the input is invalid.
+        """
         item = item.strip()
         if not item:
             return None
 
-        if item.isdigit():
+        if ItemCog._is_valid_id_format(item):
             return item
 
         parsed = urlparse(item)
@@ -159,7 +199,20 @@ class ItemCog(commands.GroupCog, group_name="item"):
             path_segments = [seg for seg in parsed.fragment.split("/") if seg]
             if path_segments:
                 potential_id = path_segments[-1]
-                if potential_id.isdigit():
+                if ItemCog._is_valid_id_format(potential_id):
                     return potential_id
 
         return None
+
+    @staticmethod
+    def _is_valid_id_format(value: str) -> bool:
+        """Checks whether a string matches the ID format: 12345 or 12345-12.
+
+        Args:
+            value (str): Value to verify.
+
+        Returns:
+            bool: True if a value matches the format; False otherwise.
+        """
+        parts = value.split("-")
+        return len(parts) in (1, 2) and all(part.isdigit() for part in parts)

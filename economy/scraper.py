@@ -4,10 +4,13 @@ import re
 from contextlib import contextmanager
 from decimal import Decimal
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 from playwright.sync_api import Page, sync_playwright
+
+from config.settings import CHROMIUM_EXECUTABLE_PATH
 
 os.makedirs("logs", exist_ok=True)
 
@@ -19,6 +22,14 @@ logging.basicConfig(
 
 
 def _parse_item_price(price: list[str]) -> Decimal:
+    """Convert the price list to a decimal.
+
+    Args:
+        price (list[str]): A list of gold and silver.
+
+    Returns:
+        Decimal: An item's price
+    """
     gold = price[0].replace(",", "").strip()
     silver = price[1].replace(",", "").strip()
 
@@ -44,12 +55,25 @@ def managed_browser(headless=True):
 
     Args:
         headless (bool, optional): True to open the browser in headless mode.
-        Defaults to True.
+         Defaults to True.
+
+    Raises:
+            ValueError: If `CHROMIUM_EXECUTABLE_PATH` is missing from the .env file.
+            FileNotFoundError: If the Chromium executable is not found at
+             `CHROMIUM_EXECUTABLE_PATH`.
     """
+    if not CHROMIUM_EXECUTABLE_PATH:
+        raise ValueError("Your .env file is missing CHROMIUM_EXECUTABLE_PATH.")
+
+    if not Path(CHROMIUM_EXECUTABLE_PATH).is_file():
+        raise FileNotFoundError(
+            f"Chromium executable not found at path: {CHROMIUM_EXECUTABLE_PATH}"
+        )
+
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
             headless=headless,
-            executable_path="/usr/bin/chromium-browser",
+            executable_path=CHROMIUM_EXECUTABLE_PATH,
             args=[
                 "--disable-blink-features=AutomationControled",
                 "--start-maximized",
@@ -69,6 +93,13 @@ def managed_browser(headless=True):
 
 
 class Scraper:
+    """Responsible for scraping data from Undermine.exchange.
+
+    Attributes:
+        page (Page): The Undermine.exchange page.
+        _region (Region): WoW region. Defaults to `Region.EU`
+    """
+
     EXTRACTORS = (
         lambda data: data.strip() if isinstance(data, str) else data,
         lambda data: data.strip() if isinstance(data, str) else data,
@@ -97,7 +128,17 @@ class Scraper:
         self._update_base_url()
 
     def scrape_item(self, item_id: str) -> dict[str, Any]:
+        """Retrieves an item's data from Undermine.exchange.
 
+        Args:
+            item_id (str): An item's ID.
+
+        Raises:
+            RuntimeError: If scraping the item data fails.
+
+        Returns:
+            dict[str, Any]: A dictionary containing the item's data.
+        """
         target_url = f"{self._base_url}/{item_id}"
 
         try:
@@ -135,6 +176,11 @@ class Scraper:
             raise RuntimeError(f"Failed to scrap item {item_id}") from e
 
     def _scrape_realm_specific_item(self) -> dict[str, Any]:
+        """Scrapes Realm-Specific item.
+
+        Returns:
+            dict[str, Any]: A dictionary containing the server, price and count.
+        """
         self.page.wait_for_selector("div.list table tbody tr", timeout=5000)
         servers_rows = self.page.evaluate("""
             () => {
@@ -184,6 +230,11 @@ class Scraper:
         }
 
     def _scrape_region_wide_item(self) -> dict[str, Any]:
+        """Scrapes Region-Wide item.
+
+        Returns:
+            dict[str, Any]: A dictionary containing the price and count.
+        """
         details_table = self.page.locator("table.hidden-region-details")
 
         count_locator = details_table.locator(

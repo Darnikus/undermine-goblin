@@ -21,6 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from the .env file
 load_dotenv(BASE_DIR / '.env')
 
+CHROMIUM_EXECUTABLE_PATH = os.getenv('CHROMIUM_EXECUTABLE_PATH')
 REGION = os.getenv('REGION')
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 DISCORD_CHANNEL_ID = os.getenv('DISCORD_CHANNEL_ID')
@@ -30,10 +31,10 @@ DISCORD_CHANNEL_ID = os.getenv('DISCORD_CHANNEL_ID')
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-blqu$a=4ar557_8*(fc=1*j@gydjx0%m2^7)t3c4^udg9b!#b8'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = []
 

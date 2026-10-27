@@ -121,6 +121,14 @@ class Command(BaseCommand):
 
     @staticmethod
     def _format_decimal_to_string(price: Decimal) -> str:
+        """Converts the price from a decimal to a string format.
+
+        Args:
+            price (Decimal): An item's price.
+
+        Returns:
+            str: An item's price in str.
+        """
         gold, silver = divmod(price, 1)
         silver = int(silver * 100)
 
