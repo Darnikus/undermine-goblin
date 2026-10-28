@@ -2,7 +2,7 @@
   Undermine Goblin
  </h1>
 
-<h4 align="center"> WIP</h4>
+<h4 align="center">A Django-powered web scraper that uses Playwright and communicates through a Discord bot.</h4>
 
 GIF here
 
@@ -13,6 +13,7 @@ GIF here
 - [Installation](#️-installation)
 - [Usage](#️-usage)
 - [Roadmap](#️-roadmap)
+- [Disclaimer](#️-disclaimer)
 - [Licence](#-licence)
 
 ## 🚀 Key Features
@@ -28,7 +29,7 @@ GIF here
 - **[uv](https://docs.astral.sh/uv/)** An extremely fast Python package and project manager
 - **Python** version 3.14 or higher
 - **Chromium executable** for Playwright
-- **Discord bot** [How to create one](https://docs.discord.com/developers/quick-start/getting-started#step-1-creating-an-app)
+- **Discord bot** ([Guide to create one](https://docs.discord.com/developers/quick-start/getting-started#step-1-creating-an-app))
 
 ## ⚙️ Installation
 
@@ -59,7 +60,7 @@ Create a `.env` file in the root directory. Generate a secure `DJANGO_SECRET_KEY
 uv run python -c 'import django.core.management.utils; print(django.core.management.utils.get_random_secret_key())'
 ```
 
-Fill out your `.env` file (use `.env.example` for convenience):
+Fill out your `.env` file (use [`.env.example`](.env.example) for convenience):
 ```
 DJANGO_SECRET_KEY=your-django-secret-key
 DJANGO_DEBUG=FALSE
@@ -95,6 +96,15 @@ uv run python manage.py discord_bot
 ## 🗺️ Roadmap
 
 - Selecting a region via the Discord bot
-- Add pagination to the /item list command
+- Add pagination to the `/item list` command
+- Bot setup initialization when adding to a channel.
+
+## ⚠️ Disclaimer
+
+This project is a **pet project** create solely for educational purposes and portfolio demonstration.
+
+- This tool automates browser interactions directly through the website's user interactions.
+- *Note:* Undermine.exchange has its own API, which is generally preferred.
+- Use this code responsibly and at your own risk. The author assumes no liability for any misuse or violations of third-party terms of service.
 
 ## 📄 Licence
