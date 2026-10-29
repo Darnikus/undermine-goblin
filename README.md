@@ -4,7 +4,7 @@
 
 <h4 align="center">A Django-powered web scraper that uses Playwright and communicates through a Discord bot.</h4>
 
-GIF here
+![GIF DEMO](https://github.com/user-attachments/assets/f924c468-d142-4251-be37-0ef0b3cac086)
 
 ## Table of Contents
 
