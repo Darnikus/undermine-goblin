@@ -108,3 +108,5 @@ This project is a **pet project** create solely for educational purposes and por
 - Use this code responsibly and at your own risk. The author assumes no liability for any misuse or violations of third-party terms of service.
 
 ## 📄 Licence
+
+MIT
