@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Any
 
 import requests
-from django.conf import settings
+from bot.config import DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID, REGION
 from django.core.management.base import BaseCommand
 
 from economy.models import Item, PriceHistory
@@ -22,8 +22,6 @@ class Command(BaseCommand):
 
         self.stdout.write("Starting hourly item scrape...")
 
-        DISCORD_BOT_TOKEN = settings.DISCORD_BOT_TOKEN
-        DISCORD_CHANNEL_ID = settings.DISCORD_CHANNEL_ID
         if not DISCORD_BOT_TOKEN or not DISCORD_CHANNEL_ID:
             self.stdout.write(
                 self.style.WARNING(
@@ -38,7 +36,7 @@ class Command(BaseCommand):
             "Content-Type": "application/json",
         }
 
-        region = Region[getattr(settings, "REGION", "EU")]
+        region = Region[REGION if REGION is not None else "EU"]
         items = list(Item.objects.all())
         if not items:
             self.stdout.write(self.style.WARNING("No items found in the db."))
