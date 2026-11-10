@@ -22,9 +22,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 CHROMIUM_EXECUTABLE_PATH = os.getenv('CHROMIUM_EXECUTABLE_PATH')
-REGION = os.getenv('REGION')
-DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
-DISCORD_CHANNEL_ID = os.getenv('DISCORD_CHANNEL_ID')
 
 
 # Quick-start development settings - unsuitable for production

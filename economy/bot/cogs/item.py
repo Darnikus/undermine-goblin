@@ -2,10 +2,10 @@ from urllib.parse import urlparse
 
 import discord
 from asgiref.sync import sync_to_async
+from bot.config import REGION
 from discord import app_commands
 from discord.ext import commands
 
-from config import settings
 from economy.models import Item
 from economy.scraper import Region
 from economy.services.graphs import generate_price_graph
@@ -120,7 +120,7 @@ class ItemCog(commands.GroupCog, group_name="item"):
         """
         await interaction.response.defer(thinking=True)
 
-        region = Region[getattr(settings, "REGION", "EU")]
+        region = Region[REGION if REGION is not None else "EU"]
         items = await sync_to_async(list)(Item.objects.all())
 
         if not items:
