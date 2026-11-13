@@ -2,6 +2,10 @@ import random
 import time
 
 from django.http import JsonResponse
+from rest_framework import mixins, viewsets
+
+from economy.models import Item
+from economy.serializers import ItemSerializer
 
 from .scraper import Region, Scraper, managed_browser
 
@@ -55,3 +59,13 @@ def test_multiple_scraping_view(request):
             return JsonResponse(items_data, safe=False)
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+class ItemViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
