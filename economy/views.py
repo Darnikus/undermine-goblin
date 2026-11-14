@@ -2,7 +2,8 @@ import random
 import time
 
 from django.http import JsonResponse
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, status, viewsets
+from rest_framework.response import Response
 
 from economy.models import Item
 from economy.serializers import ItemSerializer
@@ -63,9 +64,19 @@ def test_multiple_scraping_view(request):
 
 class ItemViewSet(
     mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
+
+    def create(self, request, *args, **kwargs):
+        if Item.objects.filter(id=request.data.get("id")).exists():
+            return Response(
+                {"detail": "Item already exists."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        return super().create(request, *args, **kwargs)
