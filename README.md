@@ -64,6 +64,7 @@ Fill out your `.env` file (use [`.env.example`](.env.example) for convenience):
 ```
 DJANGO_SECRET_KEY=your-django-secret-key
 DJANGO_DEBUG=FALSE
+API_BASE_URL=your_api_base_url
 CHROMIUM_EXECUTABLE_PATH=your_executable_path
 REGION=EU
 DISCORD_BOT_TOKEN=your_discord_bot_token_here
