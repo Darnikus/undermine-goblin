@@ -23,6 +23,12 @@ class ItemAPITests(APITestCase):
         self.assertEqual(Item.objects.count(), 2)
         self.assertTrue(Item.objects.filter(id=payload["id"]).exists())
 
+    def test_retrieve_single_item(self):
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["id"], self.item.id)
+
     def test_list_items(self):
         response = self.client.get(self.list_url)
 
