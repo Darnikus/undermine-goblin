@@ -80,3 +80,10 @@ class ItemViewSet(
             )
 
         return super().create(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        item = self.get_object()
+        item_str = str(item)
+
+        self.perform_destroy(item)
+        return Response({"deleted": item_str}, status=status.HTTP_200_OK)
