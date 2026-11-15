@@ -1,9 +1,10 @@
 import aiohttp
-from bot.config import API_BASE_URL
+
+from economy.bot.config import API_BASE_URL
 
 
 async def create_item(id: str):
-    api_url = f"{API_BASE_URL}/items/"
+    api_url = f"{API_BASE_URL}items/"
     timeout = aiohttp.ClientTimeout(total=10.0)
     payload = {"id": id}
 
@@ -41,7 +42,7 @@ async def create_item(id: str):
 
 
 async def delete_item(id: str):
-    api_url = f"{API_BASE_URL}/items/"
+    api_url = f"{API_BASE_URL}items/"
     timeout = aiohttp.ClientTimeout(total=10.0)
     payload = {"id": id}
 
@@ -74,7 +75,7 @@ async def delete_item(id: str):
 
 
 async def fetch_items():
-    api_url = f"{API_BASE_URL}/items/"
+    api_url = f"{API_BASE_URL}items/"
     timeout = aiohttp.ClientTimeout(total=10.0)
 
     try:
