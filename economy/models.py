@@ -14,7 +14,8 @@ class Item(models.Model):
         prices: models.Manager[PriceHistory]
 
     def __str__(self) -> str:
-        return f"{self.name} (ID: {self.id})"
+        name = self.name if self.name.strip() else "(Pending Scrape...)"
+        return f"{name} (ID: {self.id})"
 
 
 class PriceHistory(models.Model):

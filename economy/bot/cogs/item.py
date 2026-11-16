@@ -5,6 +5,7 @@ from asgiref.sync import sync_to_async
 from discord import app_commands
 from discord.ext import commands
 
+from economy.bot.api import create_item, delete_item, fetch_items
 from economy.bot.config import REGION
 from economy.models import Item
 from economy.scraper import Region
@@ -28,13 +29,16 @@ class ItemCog(commands.GroupCog, group_name="item"):
         Returns:
             list[app_commands.Choice[str]]: Item choices.
         """
-        items = await sync_to_async(list)(Item.objects.all())
+        result = await fetch_items()
 
-        return [
-            app_commands.Choice(name=item.__str__(), value=str(item.id))
-            for item in items
-            if current in str(item.id)
-        ]
+        if result["success"]:
+            return [
+                app_commands.Choice(name=item["display"], value=item["id"])
+                for item in result["data"]
+                if current in item["id"]
+            ]
+        else:
+            return []
 
     @app_commands.command(name="add", description="Add an item by URL or ID")
     @app_commands.describe(item="Past the Undermine.exchange URL or raw Item ID")
@@ -55,26 +59,26 @@ class ItemCog(commands.GroupCog, group_name="item"):
             )
             return
 
-        try:
-            tracked_item, created = await sync_to_async(Item.objects.get_or_create)(
-                id=int(item_id)
-            )
+        result = await create_item(item_id)
 
-            if created:
-                await interaction.followup.send(
-                    f"✅ Successfully added item `{tracked_item.id}`"
-                    + " to your tracking list!"
-                    + " *Details will sync in the next update cycle.*",
-                    ephemeral=True,
-                )
-            else:
-                await interaction.followup.send(
-                    f"⚠️ You are already tracking item `{tracked_item.id}`.",
-                    ephemeral=True,
-                )
-        except Exception:
+        if not result["success"]:
             await interaction.followup.send(
                 "❌ An error occurred while saving to the database.", ephemeral=True
+            )
+            return
+
+        item_data = result["data"]
+        if result["created"]:
+            await interaction.followup.send(
+                f"✅ Successfully added item `{item_data['id']}`"
+                + " to your tracking list!"
+                + " *Details will sync in the next update cycle.*",
+                ephemeral=True,
+            )
+        else:
+            await interaction.followup.send(
+                f"⚠️ You are already tracking item `{item_data['display']}`.",
+                ephemeral=True,
             )
 
     @app_commands.command(name="delete", description="Delete the item")
@@ -89,23 +93,16 @@ class ItemCog(commands.GroupCog, group_name="item"):
         """
         await interaction.response.defer(thinking=True)
 
-        try:
-            item = await sync_to_async(Item.objects.get)(id=item_id)
-            display_text = item.__str__()
-            await sync_to_async(item.delete)()
+        result = await delete_item(item_id)
 
-            await interaction.followup.send(
-                f"✅ Successfully deleted `{display_text}`.", ephemeral=True
-            )
+        if not result["success"]:
+            await interaction.followup.send(result["message"], ephemeral=True)
+            return
 
-        except Item.DoesNotExist:
-            await interaction.followup.send(
-                f"⚠️ Item with ID: `{item_id}` was not found.", ephemeral=True
-            )
-        except Exception:
-            await interaction.followup.send(
-                "❌ An error occurred while deleting the item.", ephemeral=True
-            )
+        item = result["data"]
+        await interaction.followup.send(
+            f"✅ Successfully deleted `{item['display']}`.", ephemeral=True
+        )
 
     @app_commands.command(
         name="list",
@@ -121,10 +118,10 @@ class ItemCog(commands.GroupCog, group_name="item"):
         await interaction.response.defer(thinking=True)
 
         region = Region[REGION if REGION is not None else "EU"]
-        items = await sync_to_async(list)(Item.objects.all())
+        result = await fetch_items()
 
-        if not items:
-            await interaction.followup.send("No items are currently being tracked.")
+        if not result["success"]:
+            await interaction.followup.send(result["message"])
             return
 
         embed = discord.Embed(
@@ -133,11 +130,12 @@ class ItemCog(commands.GroupCog, group_name="item"):
             color=discord.Color.blue(),
         )
 
+        items: list[dict] = result["data"]
         for item in items:
-            name = item.name or "*(Pending Scrape...)*"
+            name = item["name"] or "*(Pending Scrape...)*"
             embed.add_field(
-                name=f"(ID: {item.id})",
-                value=f"**Name:** [{name}](https://undermine.exchange/{region.value}/{item.id})",
+                name=f"(ID: {item['id']})",
+                value=f"**Name:** [{name}](https://undermine.exchange/{region.value}/{item['id']})",
                 inline=False,
             )
 

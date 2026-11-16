@@ -17,9 +17,9 @@ async def create_item(id: str):
 
                 elif response.status == 409:
                     async with session.get(
-                        f"{api_url}/{payload['id']}"
+                        f"{api_url}{payload['id']}"
                     ) as get_item_response:
-                        if get_item_response == 200:
+                        if get_item_response.status == 200:
                             item = await get_item_response.json()
                             return {
                                 "success": True,
@@ -42,13 +42,12 @@ async def create_item(id: str):
 
 
 async def delete_item(id: str):
-    api_url = f"{API_BASE_URL}items/"
+    api_url = f"{API_BASE_URL}items/{id}/"
     timeout = aiohttp.ClientTimeout(total=10.0)
-    payload = {"id": id}
 
     try:
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.delete(api_url, json=payload) as response:
+            async with session.delete(api_url) as response:
                 if response.status == 200:
                     deleted_item = await response.json()
                     return {"success": True, "data": deleted_item}
@@ -56,13 +55,12 @@ async def delete_item(id: str):
                 elif response.status == 404:
                     return {
                         "success": False,
-                        "message": "Item not found.",
+                        "message": f"⚠️ Item with ID: `{id}` was not found.",
                     }
 
                 return {
                     "success": False,
-                    "message": "The backend server encountered an error. "
-                    f"Status code: {response.status}",
+                    "message": "❌ An error occurred while deleting the item.",
                 }
 
     except TimeoutError:
@@ -88,7 +86,7 @@ async def fetch_items():
                 elif response.status == 404:
                     return {
                         "success": False,
-                        "message": "No items found on the server.",
+                        "message": "No items are currently being tracked.",
                     }
 
                 return {

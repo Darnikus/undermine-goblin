@@ -86,4 +86,4 @@ class ItemViewSet(
         item_str = str(item)
 
         self.perform_destroy(item)
-        return Response({"deleted": item_str}, status=status.HTTP_200_OK)
+        return Response({"display": item_str}, status=status.HTTP_200_OK)
