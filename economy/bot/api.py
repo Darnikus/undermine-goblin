@@ -15,6 +15,14 @@ async def create_item(id: str):
                     data = await response.json()
                     return {"success": True, "data": data, "created": True}
 
+                elif response.status == 400:
+                    error_payload: dict = await response.json()
+                    message = error_payload.get("id", ["Invalid input."])[0]
+                    return {
+                        "success": False,
+                        "message": f"⚠️ {message}",
+                    }
+
                 elif response.status == 409:
                     async with session.get(
                         f"{api_url}{payload['id']}"

@@ -1,5 +1,3 @@
-from urllib.parse import urlparse
-
 import discord
 from asgiref.sync import sync_to_async
 from discord import app_commands
@@ -51,20 +49,10 @@ class ItemCog(commands.GroupCog, group_name="item"):
         """
         await interaction.response.defer(thinking=True)
 
-        item_id = self._parse_item_input(item)
-        if not item_id:
-            await interaction.followup.send(
-                "❌ Invalid format! Please provide a valid URL or an Item ID.",
-                ephemeral=True,
-            )
-            return
-
-        result = await create_item(item_id)
+        result = await create_item(item)
 
         if not result["success"]:
-            await interaction.followup.send(
-                "❌ An error occurred while saving to the database.", ephemeral=True
-            )
+            await interaction.followup.send(result["message"], ephemeral=True)
             return
 
         item_data = result["data"]
@@ -174,43 +162,3 @@ class ItemCog(commands.GroupCog, group_name="item"):
             )
         except Exception:
             pass
-
-    @staticmethod
-    def _parse_item_input(item: str) -> str | None:
-        """Parses the user's item input.
-
-        Args:
-            item (str): Probably an item's ID or URL.
-
-        Returns:
-            str | None: An item's ID, or None if the input is invalid.
-        """
-        item = item.strip()
-        if not item:
-            return None
-
-        if ItemCog._is_valid_id_format(item):
-            return item
-
-        parsed = urlparse(item)
-        if "undermine.exchange" in parsed.netloc:
-            path_segments = [seg for seg in parsed.fragment.split("/") if seg]
-            if path_segments:
-                potential_id = path_segments[-1]
-                if ItemCog._is_valid_id_format(potential_id):
-                    return potential_id
-
-        return None
-
-    @staticmethod
-    def _is_valid_id_format(value: str) -> bool:
-        """Checks whether a string matches the ID format: 12345 or 12345-12.
-
-        Args:
-            value (str): Value to verify.
-
-        Returns:
-            bool: True if a value matches the format; False otherwise.
-        """
-        parts = value.split("-")
-        return len(parts) in (1, 2) and all(part.isdigit() for part in parts)
