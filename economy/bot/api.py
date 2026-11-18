@@ -1,9 +1,39 @@
+from dataclasses import dataclass
+from typing import Literal, TypedDict
+
 import aiohttp
 
 from economy.bot.config import API_BASE_URL
 
 
-async def create_item(id: str):
+class ItemData(TypedDict):
+    id: str
+    name: str
+    display: str
+
+
+@dataclass(frozen=True)
+class OkResponse[T]:
+    data: T
+    success: Literal[True] = True
+
+    def __bool__(self) -> Literal[True]:
+        return True
+
+
+@dataclass(frozen=True)
+class FailResponse:
+    message: str
+    success: Literal[False] = False
+
+    def __bool__(self) -> Literal[False]:
+        return False
+
+
+type ApiResponse[T] = OkResponse[T] | FailResponse
+
+
+async def create_item(id: str) -> ApiResponse[tuple[ItemData, bool]]:
     api_url = f"{API_BASE_URL}items/"
     timeout = aiohttp.ClientTimeout(total=10.0)
     payload = {"id": id}
@@ -12,16 +42,13 @@ async def create_item(id: str):
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(api_url, json=payload) as response:
                 if response.status == 201:
-                    data = await response.json()
-                    return {"success": True, "data": data, "created": True}
+                    data: ItemData = await response.json()
+                    return OkResponse((data, True))
 
                 elif response.status == 400:
                     error_payload: dict = await response.json()
                     message = error_payload.get("id", ["Invalid input."])[0]
-                    return {
-                        "success": False,
-                        "message": f"⚠️ {message}",
-                    }
+                    return FailResponse(f"⚠️ {message}")
 
                 elif response.status == 409:
                     async with session.get(
@@ -29,27 +56,19 @@ async def create_item(id: str):
                     ) as get_item_response:
                         if get_item_response.status == 200:
                             item = await get_item_response.json()
-                            return {
-                                "success": True,
-                                "data": item,
-                                "created": False,
-                            }
+                            return OkResponse((item, False))
 
-                return {
-                    "success": False,
-                    "message": "The backend server encountered an error. "
-                    f"Status code: {response.status}",
-                }
+                return FailResponse(
+                    "❌ The backend server encountered an error. "
+                    f"Status code: {response.status}"
+                )
     except TimeoutError:
-        return {
-            "success": False,
-            "message": "The server took too long to respond.",
-        }
+        return FailResponse("❌ The server took too long to respond.")
     except aiohttp.ClientConnectorError:
-        return {"success": False, "message": "Unable to reach the backend server."}
+        return FailResponse("❌ Unable to reach the backend server.")
 
 
-async def delete_item(id: str):
+async def delete_item(id: str) -> ApiResponse[ItemData]:
     api_url = f"{API_BASE_URL}items/{id}/"
     timeout = aiohttp.ClientTimeout(total=10.0)
 
@@ -57,30 +76,21 @@ async def delete_item(id: str):
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.delete(api_url) as response:
                 if response.status == 200:
-                    deleted_item = await response.json()
-                    return {"success": True, "data": deleted_item}
+                    deleted_item: ItemData = await response.json()
+                    return OkResponse(deleted_item)
 
                 elif response.status == 404:
-                    return {
-                        "success": False,
-                        "message": f"⚠️ Item with ID: `{id}` was not found.",
-                    }
+                    return FailResponse(f"⚠️ Item with ID: `{id}` was not found.")
 
-                return {
-                    "success": False,
-                    "message": "❌ An error occurred while deleting the item.",
-                }
+                return FailResponse("❌ An error occurred while deleting the item.")
 
     except TimeoutError:
-        return {
-            "success": False,
-            "message": "The server took too long to respond.",
-        }
+        return FailResponse("❌ The server took too long to respond.")
     except aiohttp.ClientConnectorError:
-        return {"succe>ss": False, "message": "Unable to reach the backend server."}
+        return FailResponse("❌ Unable to reach the backend server.")
 
 
-async def fetch_items():
+async def fetch_items() -> ApiResponse[list[ItemData]]:
     api_url = f"{API_BASE_URL}items/"
     timeout = aiohttp.ClientTimeout(total=10.0)
 
@@ -88,25 +98,19 @@ async def fetch_items():
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.get(api_url) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    return {"success": True, "data": data}
+                    data: list[ItemData] = await response.json()
+                    return OkResponse(data)
 
                 elif response.status == 404:
-                    return {
-                        "success": False,
-                        "message": "No items are currently being tracked.",
-                    }
+                    return FailResponse("❌ No items are currently being tracked.")
 
-                return {
-                    "success": False,
-                    "message": "The backend server encountered an error. "
-                    f"Status code: {response.status}",
-                }
+                return FailResponse(
+                    "❌ The backend server encountered an error. "
+                    f"Status code: {response.status}"
+                )
 
     except TimeoutError:
-        return {
-            "success": False,
-            "message": "The server took too long to respond.",
-        }
+        return FailResponse("❌ The server took too long to respond.")
+
     except aiohttp.ClientConnectorError:
-        return {"success": False, "message": "Unable to reach the backend server."}
+        return FailResponse("❌ Unable to reach the backend server.")

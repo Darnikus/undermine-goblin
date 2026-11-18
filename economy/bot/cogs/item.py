@@ -29,10 +29,10 @@ class ItemCog(commands.GroupCog, group_name="item"):
         """
         result = await fetch_items()
 
-        if result["success"]:
+        if result:
             return [
                 app_commands.Choice(name=item["display"], value=item["id"])
-                for item in result["data"]
+                for item in result.data
                 if current in item["id"]
             ]
         else:
@@ -51,12 +51,12 @@ class ItemCog(commands.GroupCog, group_name="item"):
 
         result = await create_item(item)
 
-        if not result["success"]:
-            await interaction.followup.send(result["message"], ephemeral=True)
+        if not result:
+            await interaction.followup.send(result.message, ephemeral=True)
             return
 
-        item_data = result["data"]
-        if result["created"]:
+        item_data, created = result.data
+        if created:
             await interaction.followup.send(
                 f"✅ Successfully added item `{item_data['id']}`"
                 + " to your tracking list!"
@@ -83,11 +83,11 @@ class ItemCog(commands.GroupCog, group_name="item"):
 
         result = await delete_item(item_id)
 
-        if not result["success"]:
-            await interaction.followup.send(result["message"], ephemeral=True)
+        if not result:
+            await interaction.followup.send(result.message, ephemeral=True)
             return
 
-        item = result["data"]
+        item = result.data
         await interaction.followup.send(
             f"✅ Successfully deleted `{item['display']}`.", ephemeral=True
         )
@@ -108,8 +108,8 @@ class ItemCog(commands.GroupCog, group_name="item"):
         region = Region[REGION if REGION is not None else "EU"]
         result = await fetch_items()
 
-        if not result["success"]:
-            await interaction.followup.send(result["message"])
+        if not result:
+            await interaction.followup.send(result.message)
             return
 
         embed = discord.Embed(
@@ -118,7 +118,7 @@ class ItemCog(commands.GroupCog, group_name="item"):
             color=discord.Color.blue(),
         )
 
-        items: list[dict] = result["data"]
+        items = result.data
         for item in items:
             name = item["name"] or "*(Pending Scrape...)*"
             embed.add_field(
