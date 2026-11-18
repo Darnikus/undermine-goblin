@@ -6,6 +6,7 @@ from economy.models import Item
 
 
 class ItemSerializer(serializers.ModelSerializer):
+    id = serializers.CharField()  # Override to not trigger 50 length check
     display = serializers.CharField(source="__str__", read_only=True)
 
     class Meta:
