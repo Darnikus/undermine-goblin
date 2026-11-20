@@ -95,10 +95,10 @@ class ItemViewSet(
             Response: HTTP response with the item and status 201 (created)
                 or 200 (existing).
         """
-        if Item.objects.filter(id=request.data.get("id")).exists():
+        existing = Item.objects.filter(id=request.data.get("id")).first()
+        if existing:
             return Response(
-                {"detail": "Item already exists."},
-                status=status.HTTP_409_CONFLICT,
+                self.get_serializer(existing).data, status=status.HTTP_200_OK
             )
 
         return super().create(request, *args, **kwargs)

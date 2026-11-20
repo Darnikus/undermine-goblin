@@ -96,7 +96,11 @@ async def create_item(id: str) -> ApiResponse[tuple[ItemData, bool]]:
     try:
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(api_url, json=payload) as response:
-                if response.status == 201:
+                if response.status == 200:
+                    item: ItemData = await response.json()
+                    return OkResponse((item, False))
+
+                elif response.status == 201:
                     data: ItemData = await response.json()
                     return OkResponse((data, True))
 
@@ -104,14 +108,6 @@ async def create_item(id: str) -> ApiResponse[tuple[ItemData, bool]]:
                     error_payload: dict = await response.json()
                     message = error_payload.get("id", ["Invalid input."])[0]
                     return FailResponse(f"⚠️ {message}")
-
-                elif response.status == 409:
-                    async with session.get(
-                        f"{api_url}{payload['id']}"
-                    ) as get_item_response:
-                        if get_item_response.status == 200:
-                            item = await get_item_response.json()
-                            return OkResponse((item, False))
 
                 return FailResponse(
                     "❌ The backend server encountered an error. "
