@@ -14,7 +14,19 @@ class ItemSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "display"]
         read_only_fields = ["name", "display"]
 
-    def validate_id(self, value: str):
+    def validate_id(self, value: str) -> str:
+        """Validates the incoming presumed ID of an item.
+
+        Args:
+            value (str): Probably an item ID or a link to one.
+
+        Raises:
+            serializers.ValidationError: If the value is blank.
+            serializers.ValidationError: If the value fails validation.
+
+        Returns:
+            str: The item's verified ID.
+        """
         item = value.strip()
         if not item:
             raise serializers.ValidationError("ID is empty.")

@@ -69,10 +69,32 @@ class ItemViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
+    """API endpoint for viewing, creating, and deleting items.
+
+    Provides standard CRD operations (`create`, `retrieve`, `destroy`).
+
+    Attributes:
+        queryset: QuerySet of `Item` instances ordered by creation date.
+        serializer_class: Serializer used to validate item data.
+    """
+
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs) -> Response:
+        """Creates a new item or returns an existing item if one with the same ID
+        already exists.
+
+        Returns HTTP 201 when a new item is created, or HTTP 200 with the existing
+        item if a match is found.
+
+        Args:
+            request: The incoming HTTP POST request.
+
+        Returns:
+            Response: HTTP response with the item and status 201 (created)
+                or 200 (existing).
+        """
         if Item.objects.filter(id=request.data.get("id")).exists():
             return Response(
                 {"detail": "Item already exists."},
@@ -81,7 +103,15 @@ class ItemViewSet(
 
         return super().create(request, *args, **kwargs)
 
-    def destroy(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs) -> Response:
+        """Deletes an item and returns its display text with a 200 HTTP status.
+
+        Args:
+            request: The incoming HTTP DELETE request.
+
+        Returns:
+            Response: HTTP response with an item's display text and status 200.
+        """
         item = self.get_object()
         item_str = str(item)
 
