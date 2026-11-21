@@ -403,6 +403,18 @@ wheels = [
 ]
 
 [[package]]
+name = "djangorestframework"
+version = "3.18.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8d/b2/1cee76b188301f7d03169ca77fab2b3d3ec5d01b3469189f944af2d7f11a/djangorestframework-3.18.3.tar.gz", hash = "sha256:446a9b352e7eff630421ab3f2328bd2401b109a9470afa4a31189994911ed030", size = 923563, upload-time = "2026-10-06T21:33:51.521Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c4/dd/de5f4543765bec94e036a5e9593a42f8fa7efec8de78eb56b9ca834385f3/djangorestframework-3.18.3-py3-none-any.whl", hash = "sha256:8544bb674846731b1e3c9b309236ee1dc412905a0aa725be2ec193ca950a7d12", size = 903986, upload-time = "2026-10-06T21:33:49.917Z" },
+]
+
+[[package]]
 name = "fonttools"
 version = "4.67.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1088,6 +1100,7 @@ dependencies = [
     { name = "discord-py" },
     { name = "django" },
     { name = "django-q2" },
+    { name = "djangorestframework" },
     { name = "matplotlib" },
     { name = "playwright" },
     { name = "python-dotenv" },
@@ -1104,6 +1117,7 @@ requires-dist = [
     { name = "discord-py", specifier = ">=2.7.1" },
     { name = "django", specifier = ">=6.1.1" },
     { name = "django-q2", specifier = ">=1.11.1" },
+    { name = "djangorestframework", specifier = ">=3.18.3" },
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "playwright", specifier = ">=1.63.0" },
     { name = "python-dotenv", specifier = ">=1.2.4" },

@@ -1,9 +1,9 @@
 from typing import Any
 
-from bot.config import DISCORD_BOT_TOKEN
 from django.core.management.base import BaseCommand
 
 from economy.bot.client import EconomyBot
+from economy.bot.config import DISCORD_BOT_TOKEN
 
 
 class Command(BaseCommand):

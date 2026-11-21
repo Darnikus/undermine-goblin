@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'economy',
-    'django_q'
+    'django_q',
+    'rest_framework',
 ]
 
 # Django-Q2 settings
